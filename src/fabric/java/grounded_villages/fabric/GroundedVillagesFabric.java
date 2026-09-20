@@ -3,6 +3,7 @@ package grounded_villages.fabric;
 import grounded_villages.config.ConfigHolder;
 import grounded_villages.config.ConfigIo;
 import grounded_villages.hook.HookRegistry;
+import grounded_villages.piece.PieceRejectionHook;
 import grounded_villages.site.SiteStartHook;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -10,9 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Fabric entrypoint. Loads the config (GV-9) and registers the SITE hook (GV-6,
- * {@code grounded_villages.site.SiteStartHook}); no per-piece or tier logic yet -- those land in
- * their own domain tickets (PIECE/TIER, docs/spec/04-architecture.md "Shape").
+ * Fabric entrypoint. Loads the config (GV-9) and registers the SITE hook (GV-6, {@code
+ * grounded_villages.site.SiteStartHook}) and the PIECE hook (GV-7, {@code
+ * grounded_villages.piece.PieceRejectionHook}); tier rolling (GV-8) needs no hook registration of
+ * its own, wired directly into the mixin.
  */
 public final class GroundedVillagesFabric implements ModInitializer {
     private static final Logger LOGGER = LoggerFactory.getLogger("grounded_villages");
@@ -30,6 +32,7 @@ public final class GroundedVillagesFabric implements ModInitializer {
     public void onInitialize() {
         ConfigHolder.set(ConfigIo.loadOrCreate(FabricLoader.getInstance().getConfigDir()));
         HookRegistry.setStartHook(SiteStartHook.INSTANCE);
+        HookRegistry.setPieceHook(PieceRejectionHook.INSTANCE);
         LOGGER.info("Grounded Villages: skeleton loaded (Fabric)");
 
         if (FabricLoader.getInstance().isDevelopmentEnvironment()) {

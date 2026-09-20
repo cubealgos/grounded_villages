@@ -350,3 +350,127 @@ different and heavier mechanism than "cap the depth" (this ticket's own instruct
 its own ticket. `tier.performance_cap_multiplier` as shipped is a best-effort dampener on the
 tier's own configured depth budget, not a hard ceiling on any single village's real cost, and
 `city`'s default depth (10) can in practice produce a village several times past the nominal cap.
+
+## GV-7: per-piece rejection and the shrink/move/vanilla ladder
+
+`docs/baseline/grounded-26.2-fabric-10-seeds-all.json` is this ticket's own raw data, same ten
+seeds, `site.enabled: true`, `piece.enabled: true`, `tier.enabled: true` -- shipped defaults
+throughout (`piece.max_height_deviation: 6`, `tier.hamlet_minimum_pieces: 4`), the mod's actual
+intended end-to-end behaviour for the first time in this fleet's own history. `grounded_villages.piece.PieceGate`
+(`domains/pieces.md` `PIECE-REQ-001`-`004`) and `grounded_villages.piece.PieceLadder`
+(`decisions/DEC-010-shrink-move-vanilla.md`) implement the domain; `PlacerMixin`'s own javadoc has
+the bytecode evidence for exactly where a child candidate is committed and how rejection reuses
+vanilla's own "this connector gets nothing" path; `JigsawPlacementMixin`'s own javadoc has the
+mechanism for the ladder itself (wrapping `Structure.GenerationStub`'s deferred piece-placement
+consumer, not the call to `addPieces`, which only *builds* that consumer without ever running it).
+
+### Before / after (vanilla vs. every domain enabled)
+
+| seed | structure | vanilla spread / water / pieces | all-on spread / water / pieces | tier | rejected (w/h) | outcome |
+|---|---|---|---|---|---|---|
+| 1 | `village_plains` | 8.0 / 16.4% / 84 | 3.0 / 0.0% / 52 | hamlet | 3 / 3 | shrink |
+| 2 | `village_plains` | 5.0 / 2.4% / 80 | 2.0 / 0.0% / 46 | hamlet | 0 / 0 | unaffected |
+| 3 | `village_plains` | 12.0 / 0.0% / 103 | 2.0 / 0.0% / 30 | hamlet | 0 / 2 | shrink |
+| 4 | `village_snowy` | 11.0 / 46.0% / 105 | 6.0 / 0.0% / 45 | hamlet | 2 / 4 | shrink |
+| 5 | `village_plains` | 20.0 / 7.2% / 230 | 2.0 / 0.0% / 46 | hamlet | 0 / 4 | shrink |
+| 6 | `village_snowy` | 23.0 / 0.0% / 50 | 9.0 / 0.0% / 47 | hamlet | 0 / 9 | shrink |
+| 7 | `village_plains` | 25.0 / 0.9% / 141 | 6.0 / 0.0% / 47 | hamlet | 0 / 7 | shrink |
+| 8 | `village_taiga` | 7.0 / 1.5% / 114 | 5.0 / 0.0% / 33 | hamlet | 2 / 0 | shrink |
+| 9 | `village_plains` | 26.0 / 53.4% / 151 | 26.0 / 55.4% / 127 | village | 0 / 0 | vanilla |
+| 10 | `village_snowy` | 6.7 / 0.0% / 113 | 5.0 / 0.0% / 45 | hamlet | 0 / 1 | shrink |
+
+10 seeds: mean height spread **14.4 -> 6.6** (54% down), mean water fraction **12.8% -> 5.5%**
+(57% down), mean piece count **117.1 -> 51.8** (56% down, expected -- shrinking to hamlet caps
+every affected village's own footprint at whatever survived rejection). Ladder outcomes across the
+ten: **8 shrink, 1 unaffected, 1 vanilla** (`{shrink: 8, unaffected: 1, vanilla: 1}` --
+`tools/seed_sweep_report.py`'s own summary line). Total rejected pieces: **7 water, 30 height
+deviation**.
+
+**Reported honestly, seeds 4 and 9 included, per the ticket's own instruction**: seed 4 (46.0%
+water in the vanilla baseline, one of the two worst) improved to **0.0%** -- two pieces rejected
+for water, four for height deviation, survivors still clearing the hamlet minimum, kept and
+relabelled hamlet. Seed 9 (53.4% water in the vanilla baseline, the single worst) did **not**
+improve -- **55.4%, effectively unchanged, even slightly higher** than vanilla. This is not
+`PieceGate` failing to reject: seed 9's own `site_decisions` tally (GV-6's own baseline section
+above) already showed its search exhausted outright on every attempt at this ticket's own
+thresholds, and `docs/spec/domains/site.md` §2 "Unwanted" already names this exact case as
+accepted, not a bug ("terrain so uniformly bad ... that almost every village falls back to
+vanilla behaviour"). This ticket's own ladder reached the same conclusion independently: 0 pieces
+were ever rejected for seed 9's winning village (`rejectedWater`/`rejectedHeight` both 0), meaning
+`PieceGate` accepted every candidate the site itself proposed -- there was nothing for the ladder
+to shrink or move away from. `docs/spec/domains/site.md`'s own move step (`SITE-REQ-006`, this
+ticket's own "move" reuse of `SiteSearch.searchAlternative`) never even engages here, since it only
+fires when the survivor count falls *short* of the hamlet minimum -- a village this large (127
+pieces after tiering to `village`) was never at risk of that, whatever fraction of it sits on
+water. Read together with `SITE`'s own already-exhausted search, seed 9 is the sharpest evidence
+in this whole baseline sweep for `domains/site.md` §2's own accepted-case wording: a large,
+uniformly wet seed genuinely is not something a bounded, in-cell search or a per-piece water veto
+can fully rescue, by design.
+
+### Two operational findings, this ticket's own harness runs
+
+**The watchdog, again** (the same class of finding GV-6's `SiteScorer.MAX_SAMPLE_COLUMNS` section
+above already made for `SITE`): the shrink/move/vanilla ladder means a village-tagged candidate the
+harness's own `findNearestMapStructure` merely scans in passing (not the one it eventually
+returns) can now pay up to **3x** a full jigsaw-assembly cost (attempt 1, a "move" retry, a
+"vanilla" retry) instead of vanilla's own one-shot cost, on top of `PieceGate`'s own per-piece
+sampling. Seed 1's own first sweep run (before this fix) crashed the dedicated server watchdog
+outright (`A single server tick took 60.01 seconds`). **Fix shipped**: `build.fabric.gradle.kts`'s
+own harness-only `server.properties` template now sets `max-tick-time=300000` (raised, not
+disabled with `-1`, so a genuine hang still eventually crashes the harness) -- a test-tooling-only
+change, since a real dedicated server never forces dozens of candidate villages to fully assemble
+inside one tick the way this harness's own broad, synchronous `findNearestMapStructure` scan does.
+**Flagged, not built** (out of this ticket's own scope, same restraint GV-6 showed for its own
+column-cap finding): the real fix for the underlying multiplier is a fail-fast ladder (bail the
+"move"/"vanilla" retries early once a shifted candidate's own site-level score is already
+hopeless, rather than always running a full attempt), not a larger watchdog allowance.
+
+**A reused `run-<seed>` directory silently serves stale placement, with no rejection/ladder
+metadata at all**: discovered live, this ticket -- sweeping seed 1 three times in the same
+directory produced real `tier`/`ladderOutcome`/rejection data on the first (fresh-world) run and
+`null`/`0` on the second and third (world-reused) runs, with byte-identical placement (52 pieces,
+height spread 3.0, water 0.0%) every time. Minecraft loads an already-saved chunk's `StructureStart`
+straight from its region file rather than regenerating it, so `findGenerationPoint` -- and every
+`grounded_villages` hook downstream of it, including the registries `SeedSweepRunner` reads back
+from -- never fires a second time for a chunk it has already computed once; this mod's own
+bookkeeping is in-memory only, fresh per JVM, with nothing left to read back. **Fixed**: `runServer`'s
+own `doFirst` now deletes `serverRunDir` before writing a fresh `server.properties`, so every sweep
+is genuinely "one fresh dedicated server per seed," matching what `seedSweep`'s own task
+description already claimed. The ten-seed table above was generated from clean directories, this
+fix already in place.
+
+### Test counts (verbatim)
+
+- `PieceGateTest`: 13/13 passed (flat dry, a lake edge, a cliff, two slopes either side of the
+  default tolerance, the start-height-not-local-terrain distinction, the exact-boundary case, the
+  water-checked-first tie-break, streets and buildings sharing the identical check, the 5/7/9-point
+  sampling shape, and the inverted-footprint guard).
+- `PieceLadderTest`: 6/6 passed (the `UNAFFECTED` carve-out for zero rejections, a shrink-triggering
+  case, the exact-boundary case, a move-triggering case, zero survivors, and a reconfigured minimum
+  turning the same tally from shrink into retry).
+- Existing `config`/`hook`/`site`/`tier` suites: unchanged, still green (`ConfigCodecTest`,
+  `SiteScorerTest`, `SiteSearchTest`, `TierRollerTest` all re-run, no regressions).
+- `chiseledBuild`/`chiseledCheck`: green on all six nodes, including 1.20.1-forge's own Mixin
+  0.8.5 annotation processor (`@Redirect`, no `order()` member needed anywhere in this ticket's
+  own mixin work, unlike GV-6/GV-8's own `@ModifyVariable` ordering concern) -- `just check`'s own
+  report has the full run.
+- Live-server proof, beyond the ten committed baseline seeds: three manual reruns of seed 1 alone
+  (the watchdog-crash repro, the two world-reuse reruns, and the clean-directory confirmation after
+  the `runServer` fix), all consistent with the committed table above.
+
+### Interpretive ruling recorded this ticket: the shrink relabel only applies when something was
+### actually rejected
+
+`docs/spec/domains/pieces.md` `PIECE-REQ-006`'s own literal wording ("keep the village ... at or
+above `tier.hamlet_minimum_pieces` ... relabelled hamlet regardless of its originally rolled
+tier") has no explicit "only if something was rejected" clause -- read fully literally, it would
+relabel *every* village hamlet the moment `piece.enabled` is true, since `hamlet_minimum_pieces`'
+own default (4) is far below a typical village's real piece count (this ticket's own table above:
+30-127). `grounded_villages.piece.PieceLadder`'s own javadoc records the reading this ticket ships
+instead: the ladder (and any relabelling) only engages when at least one piece was actually
+rejected (`PieceLadder.Outcome.UNAFFECTED` short-circuits otherwise) -- matching `PIECE-FAIL-001`'s
+own title ("a village loses enough pieces to rejection") and `PIECE-REQ-006`'s own "keep the
+village as generated" phrasing, which only reads as a meaningful description for a village that
+lost something. **Flagged for Kevin to confirm**, same footing as every other proposed default or
+reading this fleet carries forward for the first ticket to touch it -- `PieceLadderTest`'s own
+`zeroRejectionsIsUnaffectedRegardlessOfSurvivorCount` test is the executable form of this ruling.

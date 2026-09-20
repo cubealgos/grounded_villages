@@ -31,6 +31,14 @@ The extension point GV-6 (domains/site.md) and GV-7 (domains/pieces.md) plug the
 ### `enum PieceDecision` — `src/main/java/grounded_villages/hook/PieceDecision.java`
 What VillagePieceHook#onChild may decide for a proposed piece (domains/pieces.md): accept it (vanilla places it) or reject it (vanilla does not).
 
+### `class PieceLadderRegistry` — `src/main/java/grounded_villages/hook/PieceLadderRegistry.java`
+The per-piece-rejection counterpart of TierAssignmentRegistry (ticket GV-7 build item 3: "extend VillageSweepResult with rejected-piece counts and outcome"): the "static last-assignment map keyed by start chunk" the seed-sweep harness (grounded_villages.harness) reads once assembly finishes, since the harness only ever sees the finished world, not the mixin calls that ran the shrink/move/vanilla ladder.
+- `void record(ChunkPos startChunk, PieceLadderResult result)`
+- `PieceLadderResult get(ChunkPos startChunk)` — null when no ladder result was ever recorded for startChunk.
+
+    - **nested** `record PieceLadderResult(String outcome, int rejectedWater, int rejectedHeight, int acceptedNonStreet, int acceptedStreet)`
+    One village candidate's final ladder outcome (`decisions/DEC-010-shrink-move-vanilla.md`) and rejection tally, exactly what VillageSweepResult (GV-10, extended this ticket) prints.
+
 ### `interface StartDecision` — `src/main/java/grounded_villages/hook/StartDecision.java`
 What VillageStartHook#onStart may decide for a candidate village start position (domains/site.md): keep it as vanilla proposed it, shift it to an already-found alternative, or fall back to vanilla's own unchecked placement (SITE-REQ-004).
 - `StartDecision keep()`

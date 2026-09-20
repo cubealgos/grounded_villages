@@ -135,9 +135,38 @@ if (sc.current.project == "26.2-fabric") {
     // -Pgroundedvillages.port keeps the vanilla default.
     val portProp = providers.gradleProperty("groundedvillages.port")
 
+    // GV-7's own harness sweep, seed 1: the shrink/move/vanilla ladder's own "assemble again"
+    // steps (up to 3x a village's own full jigsaw-assembly cost per candidate, against the SAME
+    // "findNearestMapStructure forces many structure-set cells to generate synchronously" stress
+    // GV-6's own SiteScorer.MAX_SAMPLE_COLUMNS tuning already fought) tipped a real run past the
+    // vanilla 60s default max-tick-time and crashed the watchdog outright (`A single server tick
+    // took 60.01 seconds`) -- this default server.properties key does not otherwise exist.
+    // Raised, not disabled (`-1`), so a genuine hang still eventually crashes the harness rather
+    // than running forever: `docs/baseline/README.md`'s own GV-7 section has the measured cost
+    // and the honest flag that a fail-fast ladder (bail the "move"/"vanilla" steps early once a
+    // shifted candidate's own site-level score is already hopeless) is the real fix, out of this
+    // ticket's own scope, same as GV-6's own column-cap finding was. This is a harness-only
+    // server.properties value -- a real dedicated server loads chunks incrementally as players
+    // explore, never forcing dozens of candidate villages to fully assemble inside one tick.
     tasks.named<JavaExec>("runServer") {
         doFirst {
             if (seedProp.isPresent) {
+                // GV-7's own harness sweep found a real gap here: a `run-<seed>` directory left
+                // over from an earlier invocation (the same seed swept twice, or a standalone
+                // debug run before a full sweep) carries a persisted world -- every chunk this
+                // run's own `getChunk(FULL)` call touches, Minecraft loads straight from that
+                // saved region file rather than regenerating, so `findGenerationPoint` (and every
+                // grounded_villages hook downstream of it) never fires for an already-saved
+                // village at all. The village itself still reports correctly (piece count, height
+                // spread, water fraction all come from the same persisted data), but `tier`/
+                // `ladderOutcome`/the rejection tally silently come back null -- this mod's own
+                // registries are in-memory only, fresh per JVM, with nothing left to read back.
+                // Confirmed live this ticket: seed 1 swept three times in the same directory
+                // showed real tier/ladder data on the first (fresh) run and null on the second and
+                // third (reused-world) runs, identical placement each time. Deleting first makes
+                // every sweep genuinely "one fresh dedicated server per seed", matching what this
+                // task's own docstring already claims.
+                serverRunDir.deleteRecursively()
                 serverRunDir.mkdirs()
                 File(serverRunDir, "eula.txt").writeText("eula=true\n")
                 File(serverRunDir, "server.properties").writeText(
@@ -153,6 +182,7 @@ if (sc.current.project == "26.2-fabric") {
                     max-players=0
                     server-port=${portProp.getOrElse("25565")}
                     motd=grounded_villages seed sweep
+                    max-tick-time=300000
                     """.trimIndent() + "\n"
                 )
             }

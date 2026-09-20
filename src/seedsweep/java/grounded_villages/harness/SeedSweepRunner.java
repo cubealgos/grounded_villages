@@ -1,6 +1,7 @@
 package grounded_villages.harness;
 
 import com.google.gson.GsonBuilder;
+import grounded_villages.hook.PieceLadderRegistry;
 import grounded_villages.hook.TierAssignmentRegistry;
 import grounded_villages.tier.TierAssignment;
 import net.minecraft.core.BlockPos;
@@ -149,6 +150,15 @@ public final class SeedSweepRunner {
         TierAssignment tierAssignment = TierAssignmentRegistry.get(startChunk);
         String tier = tierAssignment == null ? null : tierAssignment.tier().name().toLowerCase(Locale.ROOT);
 
+        // GV-7: the same read-back shape as TierAssignmentRegistry above, for the shrink/move/
+        // vanilla ladder's own outcome and rejection tally -- JigsawPlacementMixin's own
+        // gv$finishLadder records this once per village-tagged candidate, keyed by the same start
+        // chunk. null when piece.enabled=false or the structure was never village-tagged.
+        PieceLadderRegistry.PieceLadderResult ladderResult = PieceLadderRegistry.get(startChunk);
+        String ladderOutcome = ladderResult == null ? null : ladderResult.outcome();
+        int rejectedWater = ladderResult == null ? 0 : ladderResult.rejectedWater();
+        int rejectedHeight = ladderResult == null ? 0 : ladderResult.rejectedHeight();
+
         VillageSweepResult result = new VillageSweepResult(
             seed,
             structureId == null ? "unknown" : structureId.toString(),
@@ -160,7 +170,10 @@ public final class SeedSweepRunner {
             waterFraction,
             totalSamples,
             tier,
-            runtimeMillis
+            runtimeMillis,
+            rejectedWater,
+            rejectedHeight,
+            ladderOutcome
         );
 
         Path absoluteOutput = outputFile.toAbsolutePath();
@@ -170,8 +183,10 @@ public final class SeedSweepRunner {
         Files.writeString(absoluteOutput, new GsonBuilder().setPrettyPrinting().create().toJson(result));
 
         LOGGER.info(
-            "seed {}: village {} at {} -- {} pieces, height spread {}, water fraction {}, tier {} ({} ms)",
-            seed, result.structureId, nearest, pieces.size(), heightSpread, waterFraction, tier, runtimeMillis
+            "seed {}: village {} at {} -- {} pieces, height spread {}, water fraction {}, tier {}, "
+                + "rejected {}w/{}h, ladder {} ({} ms)",
+            seed, result.structureId, nearest, pieces.size(), heightSpread, waterFraction, tier,
+            rejectedWater, rejectedHeight, ladderOutcome, runtimeMillis
         );
         return result;
     }
