@@ -49,6 +49,10 @@ gametest:
 sweep count="10":
     ./gradlew :26.2-fabric:seedSweep -Pcount={{count}}
 
+# GV-12: the same sweep on 26.2-neoforge -- docs/loaders.md's cross-loader determinism check.
+sweep-neoforge count="10":
+    ./gradlew :26.2-neoforge:seedSweep -Pcount={{count}}
+
 # GV-8: proves a fixed seed rolls a fixed tier (runs the dedicated server twice, diffs the
 # result). 26.2-fabric only, not wired into `check` (see build.fabric.gradle.kts's own comment on
 # `tierGameTest` for why).
