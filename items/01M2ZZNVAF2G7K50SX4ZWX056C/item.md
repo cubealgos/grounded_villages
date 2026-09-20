@@ -56,7 +56,7 @@ the main session wires the Forgejo origin afterward.
   a real environment gap the script correctly detects, not a script defect — leaving unchecked
   rather than papering over it. `docs/map.md`/`docs/map/` and the spec-copy checks inside it both
   pass.
-- [ ] `chore/bootstrap` merged into `development` (out of scope for this ticket — the main
+- [x] `chore/bootstrap` merged into `development` (out of scope for this ticket — the main
   session opens the PR; this ticket is not taken to `done`)
 
 ## Constraints and prior findings
