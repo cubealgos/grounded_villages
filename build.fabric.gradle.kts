@@ -117,11 +117,13 @@ tasks {
     }
 }
 
-// GV-10: the headless seed-sweep harness, on the 26.2-fabric node only
-// (docs/spec/operations/testing.md "Verification for the first ticket" V1). Kept in this single
-// node-conditional block so the other five nodes (1.20.1-fabric, 1.21.1-fabric, both forge/neoforge
-// legs) never see `src/seedsweep/java` or these extra tasks at all.
-if (sc.current.project == "26.2-fabric") {
+// GV-10: the headless seed-sweep harness, on the 26.2-fabric node
+// (docs/spec/operations/testing.md "Verification for the first ticket" V1), plus GV-17's own
+// 1.21.8-fabric -- one Wave 3 node, picked as this ladder's live baseline-comparison proof
+// ("the harness on one new node for baseline seed 1 as a live proof, numbers compared to the
+// 26.2 baseline"), not all six new nodes. Kept in this single node-conditional block so the other
+// ten nodes never see `src/seedsweep/java` or these extra tasks at all.
+if (sc.current.project == "26.2-fabric" || sc.current.project == "1.21.8-fabric") {
     sourceSets.main {
         java.srcDir(rootProject.file("src/seedsweep/java"))
     }
@@ -256,7 +258,7 @@ if (sc.current.project == "26.2-fabric") {
                 // subprocess is both simpler and version-proof.
                 val process = ProcessBuilder(
                     "${rootProject.projectDir}/gradlew",
-                    ":26.2-fabric:runServer",
+                    ":${sc.current.project}:runServer",
                     "-Pgroundedvillages.seed=$seed",
                     "-Pgroundedvillages.output=${outputFile.absolutePath}",
                     "-Pgroundedvillages.runDir=$runDir",
@@ -331,7 +333,7 @@ if (sc.current.project == "26.2-fabric") {
 
                 val process = ProcessBuilder(
                     "${rootProject.projectDir}/gradlew",
-                    ":26.2-fabric:runServer",
+                    ":${sc.current.project}:runServer",
                     "-Pgroundedvillages.seed=$seed",
                     "-Pgroundedvillages.output=${outputFile.absolutePath}",
                     "-Pgroundedvillages.runDir=$runDir",
