@@ -21,15 +21,35 @@
 
 | Field | Value |
 |---|---|
-| Version number | `0.1.0+1.21.1-fabric` |
+| Version number | `grounded_villages-1.21.1-fabric` |
 | Version title | Grounded Villages 0.1.0 for Fabric 1.21.1 |
 | Channel | Alpha |
 | File | `dist/grounded_villages-1.21.1-fabric-0.1.0.jar` |
 | Changelog | `CHANGELOG.md` |
 
-Placeholder for the first of six Wave 1–2 publish invocations (`GV-19`/`GV-20`/`GV-21` fill in the
-real per-node version numbers, jars and overrides); not a claim that this version exists yet — see
-`CHANGELOG.md`'s own "Unreleased" section.
+Twelve Modrinth version entries, one per Stonecutter version node
+(`docs/spec/contracts/platform-matrix.md` "Target combinations") — not typed by hand here.
+`modrinth-publish.py`'s `--targets` mode (`standards/marketing/modrinth-publishing.md`) still reads
+this table for the fields every target shares (`Channel` above sets every target's release
+channel); the row values shown are one target's own worked example, not what actually gets sent —
+`Version number`/`Version title`/`File`/`Changelog` are overridden per target from
+`docs/modrinth/targets.json` (GV-19), whose own `jar`/`game_versions`/`loaders`/`version_number`/
+`version_name`/`changelog_file` fields carry the real, twelve-target-wide values:
+
+- **`version_number`** follows `REL-DEC-001`'s `<mod>-<mc>-<loader>` scheme, e.g.
+  `grounded_villages-1.21.1-fabric`.
+- **`changelog_file`** points at a per-target notes file, `dist/notes/<version_number>.md`,
+  generated fresh by `tools/target_notes.py` (`just target-notes`) from `CHANGELOG.md`'s own
+  topmost section plus that jar's `REL-REQ-002` tested-toolchain line and `REL-REQ-004` wave
+  statement — `dist/` is gitignored build output, so this step runs before every dry run or real
+  publish, not once and committed.
+- **`just publish-dry`** (`target-notes` then `modrinth-publish.py version --targets
+  docs/modrinth/targets.json --dry-run`) prints all twelve payloads, changelog text included, and
+  sends nothing; the same command with `--yes` in place of `--dry-run` publishes them for real,
+  once jars exist at a tag (`REL-REQ-001`).
+
+Not a claim that any of these twelve versions exists on Modrinth yet — see `CHANGELOG.md`'s own
+"Unreleased" section.
 
 ## Body
 
@@ -134,9 +154,18 @@ retunable without touching Java.
 | NeoForge, 1.21.1 | new in this release (Wave 1) |
 | Fabric, 26.2 | new in this release (Wave 1) |
 | NeoForge, 26.2 | new in this release (Wave 1) |
+| Fabric, 1.20.1 | planned (Wave 2) |
 | Forge, 1.20.1 | planned (Wave 2) |
-| Fabric, current 1.21.x point releases | planned (Wave 3, exact point releases chosen when that wave ships) |
-| NeoForge, current 1.21.x point releases | planned (Wave 3, exact point releases chosen when that wave ships) |
+| Fabric, 1.21.4 | planned (Wave 3) |
+| NeoForge, 1.21.4 | planned (Wave 3) |
+| Fabric, 1.21.5 | planned (Wave 3) |
+| NeoForge, 1.21.5 | planned (Wave 3) |
+| Fabric, 1.21.8 | planned (Wave 3) |
+| NeoForge, 1.21.8 | planned (Wave 3) |
+
+Twelve combinations in total (`docs/spec/contracts/platform-matrix.md`); each generated per-target
+notes file (`tools/target_notes.py`, above) restates this same new-vs-planned split as its own
+`REL-REQ-004` wave statement, from that jar's own point of view.
 
 If your version and loader aren't listed as shipping yet, this mod isn't out for that combination
 yet — it's coming, not abandoned.

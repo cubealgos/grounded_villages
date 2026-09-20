@@ -122,14 +122,22 @@ check: lint map-check test gametest build
 release-notes version:
     python3 tools/release_notes.py {{version}}
 
-# Every shipped jar, built clean, from a tag (REL-REQ-001). GV-19/GV-21 fill in the six-invocation
-# publish loop; this recipe stays the build half.
+# GV-20: one dist/notes/<version_number>.md per docs/modrinth/targets.json entry -- CHANGELOG.md's
+# own topmost section plus that target's REL-REQ-002 tested-toolchain line and REL-REQ-004 wave
+# statement. dist/ is gitignored build output, so this must run fresh before publish-dry/a real
+# publish reads targets.json's own changelog_file fields (which is why publish-dry depends on it).
+target-notes:
+    python3 tools/target_notes.py
+
+# Every shipped jar, built clean, from a tag (REL-REQ-001). GV-19/GV-21 fill in the
+# twelve-invocation publish loop; this recipe stays the build half.
 release:
     ./gradlew chiseledBuild
 
-# GV-19: the six-invocation Modrinth publish loop's own dry run, one confirmation, nothing sent
-# (modrinth-publish.py's --targets mode, `standards/marketing/modrinth-publishing.md`). Prints all
-# six payloads from docs/modrinth/targets.json against docs/modrinth/body.md's shared fields; set
+# GV-19/GV-20: the twelve-invocation Modrinth publish loop's own dry run, one confirmation, nothing
+# sent (modrinth-publish.py's --targets mode, `standards/marketing/modrinth-publishing.md`). Prints
+# all twelve payloads (changelog text included, from target-notes below) from
+# docs/modrinth/targets.json against docs/modrinth/body.md's shared fields; set
 # GV_MODRINTH_PUBLISH to point at a different heimathafen checkout than the sibling default.
-publish-dry:
+publish-dry: target-notes
     python3 {{modrinth_publish}} version --repo . --targets docs/modrinth/targets.json --dry-run

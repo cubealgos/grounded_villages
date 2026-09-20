@@ -23,7 +23,13 @@ cannot be silently forgotten in the publish targets. GV-24: each target's own `j
 checked against `tools/jar_naming.py`'s derivation of the same expression the build files apply
 (`buildSrc/src/main/kotlin/GvJarNaming.kt`), fed by `stonecutter.properties.toml`'s own top-level
 `mod.id`/`mod.version` -- drift here (the bug GV-24 itself found: the build wrote a different jar
-name than the release tooling expected) is reported by node, never by building.
+name than the release tooling expected) is reported by node, never by building. GV-20: each
+target's `game_versions` array is also checked against `MC_JAVA` below for the same rule
+`operations/release.md`'s Modrinth publish matrix states ("A Game versions array may legitimately
+span more than one tag only within the same Java/toolchain generation; never across a Java-version
+boundary and never across loaders") -- and `loaders` is checked to still name exactly one loader,
+the same rule `modrinth-publish.py`'s own `_check_single_loader` enforces at publish time, here
+read-only and ahead of it.
 
 Read-only: reports, changes nothing. Exit 0 when every check passes, 5 when a toolchain or
 coordinate is absent or below/unequal to its pin, 6 when docs/spec/ differs from the vault copy
@@ -45,6 +51,18 @@ from pathlib import Path
 from jar_naming import jar_path
 
 TOOL_DIR = Path(__file__).resolve().parent
+
+# GV-20: docs/modrinth/targets.json's own game_versions per Minecraft point version -- the same
+# per-row Java floor JAVA_ROWS below names by combined label, keyed here by the bare mc string
+# instead so check_target_game_versions can look a version up directly.
+MC_JAVA = {
+    "1.20.1": 17,
+    "1.21.1": 21,
+    "1.21.4": 21,
+    "1.21.5": 21,
+    "1.21.8": 21,
+    "26.2": 25,
+}
 
 # One row per contracts/platform-matrix.md "Per-row toolchain" table. 1.20.1 needs Java 17, not
 # 21 -- the one rung below fabric-loom's own >=1.20.5 -> Java 21 boundary.
@@ -208,6 +226,25 @@ def parse_stonecutter_nodes(root: Path) -> list[str]:
     return nodes
 
 
+def load_targets_list(root: Path, label: str) -> tuple[list | None, tuple[bool, str] | None]:
+    """docs/modrinth/targets.json, parsed and unwrapped to its `targets` list -- the same three
+    existence/parse/shape checks every targets.json-reading check here needs, factored out once
+    (GV-20 added the third caller, `check_target_game_versions`) so the failure message a caller
+    reports for a missing/malformed file is the only thing that still varies per check, via
+    `label`."""
+    targets_path = root / "docs" / "modrinth" / "targets.json"
+    if not targets_path.exists():
+        return None, (False, f"{label}: {targets_path} missing")
+    try:
+        doc = json.loads(targets_path.read_text())
+    except json.JSONDecodeError as exc:
+        return None, (False, f"{label}: {targets_path} did not parse ({exc})")
+    targets = doc if isinstance(doc, list) else doc.get("targets") if isinstance(doc, dict) else None
+    if not isinstance(targets, list):
+        return None, (False, f"{label}: {targets_path} has no targets list")
+    return targets, None
+
+
 def check_targets(root: Path) -> tuple[bool, str]:
     """docs/modrinth/targets.json (GV-19: the Modrinth publish tool's --targets file) must list
     exactly one target per Stonecutter version node -- read from settings.gradle.kts itself, never
@@ -216,16 +253,9 @@ def check_targets(root: Path) -> tuple[bool, str]:
     if not settings_nodes:
         return False, "targets: no Stonecutter match() nodes found in settings.gradle.kts"
 
-    targets_path = root / "docs" / "modrinth" / "targets.json"
-    if not targets_path.exists():
-        return False, f"targets: {targets_path} missing"
-    try:
-        doc = json.loads(targets_path.read_text())
-    except json.JSONDecodeError as exc:
-        return False, f"targets: {targets_path} did not parse ({exc})"
-    targets = doc if isinstance(doc, list) else doc.get("targets") if isinstance(doc, dict) else None
-    if not isinstance(targets, list):
-        return False, f"targets: {targets_path} has no targets list"
+    targets, err = load_targets_list(root, "targets")
+    if err:
+        return err
 
     target_nodes = []
     for i, t in enumerate(targets, start=1):
@@ -271,16 +301,9 @@ def check_target_jars(root: Path) -> list[tuple[bool, str]]:
     if not isinstance(mod_id, str) or not isinstance(mod_version, str):
         return [(False, "target jars: mod.id/mod.version missing from stonecutter.properties.toml")]
 
-    targets_path = root / "docs" / "modrinth" / "targets.json"
-    if not targets_path.exists():
-        return [(False, f"target jars: {targets_path} missing")]
-    try:
-        targets_doc = json.loads(targets_path.read_text())
-    except json.JSONDecodeError as exc:
-        return [(False, f"target jars: {targets_path} did not parse ({exc})")]
-    targets = targets_doc if isinstance(targets_doc, list) else targets_doc.get("targets") if isinstance(targets_doc, dict) else None
-    if not isinstance(targets, list):
-        return [(False, f"target jars: {targets_path} has no targets list")]
+    targets, err = load_targets_list(root, "target jars")
+    if err:
+        return [err]
 
     results: list[tuple[bool, str]] = []
     for t in targets:
@@ -291,6 +314,49 @@ def check_target_jars(root: Path) -> list[tuple[bool, str]]:
         found = t.get("jar")
         ok = found == expected
         results.append((ok, f"target jar ({node}): {found!r}; expected {expected!r}"))
+    return results
+
+
+def check_target_game_versions(root: Path) -> list[tuple[bool, str]]:
+    """GV-20: `operations/release.md`'s Modrinth publish matrix -- "A Game versions array may
+    legitimately span more than one tag only within the same Java/toolchain generation; never
+    across a Java-version boundary and never across loaders" -- checked per
+    `docs/modrinth/targets.json` entry, mirroring GV-19's own `check_targets`/`check_target_jars`
+    shape: one row per target, "fails naming the row". `loaders` must still name exactly one
+    loader (the same rule `modrinth-publish.py`'s own `_check_single_loader` enforces at publish
+    time, here read-only and ahead of it); every `game_versions` entry must resolve to a known
+    Java major via `MC_JAVA`, and every target's set of majors must collapse to exactly one --
+    never a hardcoded count of point versions, so a target intentionally spanning more than one
+    tag within a single generation (this ticket's own `04-architecture.md`-cited exception, "keep
+    one version per target unless demonstrated") still passes so long as it does not cross a
+    boundary."""
+    targets, err = load_targets_list(root, "game versions")
+    if err:
+        return [err]
+
+    results: list[tuple[bool, str]] = []
+    for t in targets:
+        if not isinstance(t, dict) or "node" not in t:
+            continue  # check_targets above already reports a nodeless entry
+        node = t["node"]
+        loaders = t.get("loaders") or []
+        if len(loaders) != 1:
+            results.append((False, f"game versions ({node}): loaders must name exactly one loader, got {loaders!r}"))
+            continue
+        game_versions = t.get("game_versions") or []
+        if not game_versions:
+            results.append((False, f"game versions ({node}): game_versions is empty"))
+            continue
+        unknown = [v for v in game_versions if v not in MC_JAVA]
+        if unknown:
+            results.append((False, f"game versions ({node}): no known Java major for {unknown!r} in "
+                                    f"{game_versions!r} -- add it to MC_JAVA"))
+            continue
+        majors = sorted({MC_JAVA[v] for v in game_versions})
+        if len(majors) > 1:
+            results.append((False, f"game versions ({node}): {game_versions!r} spans Java majors {majors!r}"))
+        else:
+            results.append((True, f"game versions ({node}): {game_versions!r} within Java {majors[0]}"))
     return results
 
 
@@ -390,6 +456,7 @@ def main(argv: list[str] | None = None) -> int:
     ]
     results += check_coordinates(root)
     results += check_target_jars(root)
+    results += check_target_game_versions(root)
 
     code = 0
     for ok, message in results:
