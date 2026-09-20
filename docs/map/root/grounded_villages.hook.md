@@ -16,7 +16,7 @@ TerrainSampler over a real ChunkGenerator.
 What a hook needs, independent of which of the two vanilla methods fired it (04-architecture.md "Shape"): a TerrainSampler already built from the ChunkGenerator/RandomState/LevelHeightAccessor in scope at the mixin site, the chunk the structure is generating in, and the world seed the tier roll (GV-8) will need.
 
 ### `class HookDebug` — `src/main/java/grounded_villages/hook/HookDebug.java`
-A debug-level log line each time a hook fires, gated by a static flag -- so GV-10's headless harness can count firings (ticket build item 5).
+A log line each time a hook fires, gated by a static flag -- so GV-10's headless harness can count firings (ticket build item 5), and so GV-6's own harness sweep can count Keep/Shift/ Vanilla decisions the same way.
 - `boolean isEnabled()`
 - `void setEnabled(boolean value)`
 - `void fired(String hook, Object detail)`
@@ -56,5 +56,5 @@ Called as vanilla's own jigsaw assembly proposes a piece, from the JigsawPlaceme
 
 ### `interface VillageStartHook` — `src/main/java/grounded_villages/hook/VillageStartHook.java`
 Called once per candidate village start position, from the JigsawPlacement.addPieces mixin (grounded_villages.mixin.village.JigsawPlacementMixin), gated on the structure carrying #minecraft:village (decisions/DEC-007-village-tag-scope.md).
-- `StartDecision onStart(GenerationContext context, BlockPos startPos)`
+- `StartDecision onStart(GenerationContext context, BlockPos startPos, int maxDistanceFromCenter)`
 

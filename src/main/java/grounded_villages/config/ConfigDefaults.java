@@ -27,8 +27,17 @@ final class ConfigDefaults {
     static final int DEFAULT_SITE_MAX_HEIGHT_SPREAD = 12;
     static final double DEFAULT_SITE_MAX_WATER_FRACTION = 0.05;
     static final int DEFAULT_SITE_SEARCH_RADIUS = 48;
-    static final int DEFAULT_SITE_SEARCH_STEP = 16;
-    static final int DEFAULT_SITE_SEARCH_ATTEMPTS = 8;
+    // GV-6, tuned from the first harness sweep (docs/baseline/README.md): step == radius puts the
+    // search's own ring 1 at the full 48-block bound in one step, exploring only the 4 cardinal
+    // directions (the two diagonal ones exceed the radius at step*sqrt(2) and are geometrically
+    // excluded, SiteSearch#spiralOffsets) -- strictly cheaper than the original step 16 (4
+    // evaluations instead of up to 8) while reaching 3x farther, which measurably raised the
+    // qualifying-shift rate on the baseline's worst seeds without any extra sampling cost.
+    static final int DEFAULT_SITE_SEARCH_STEP = 48;
+    // Matches what step == radius actually makes reachable (4 cardinal offsets); higher values
+    // cost nothing extra here since spiralOffsets stops once ring 2 (distance 96) exceeds the
+    // 48-block radius, but 4 documents the real ceiling rather than implying unused headroom.
+    static final int DEFAULT_SITE_SEARCH_ATTEMPTS = 4;
 
     static final boolean DEFAULT_PIECE_ENABLED = true;
     static final int DEFAULT_PIECE_MAX_HEIGHT_DEVIATION = 6;

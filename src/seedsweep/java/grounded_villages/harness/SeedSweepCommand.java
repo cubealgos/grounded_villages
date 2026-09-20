@@ -1,6 +1,7 @@
 package grounded_villages.harness;
 
 import com.mojang.brigadier.CommandDispatcher;
+import grounded_villages.hook.HookDebug;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -37,6 +38,13 @@ public final class SeedSweepCommand {
 
     /** Called reflectively; see the class doc. */
     public static void register() {
+        // GV-6's own reporting need (ticket build item 4: "report ... the Keep/Shift/Vanilla
+        // counts"), not a GV-10 requirement -- the harness itself never reads this log, only
+        // GV-6's own sweep analysis does, by grepping "VillageStartHook fired" lines. Safe to
+        // leave on unconditionally: this class only exists in a development environment at all
+        // (GroundedVillagesFabric's own isDevelopmentEnvironment() gate before it ever calls
+        // #register).
+        HookDebug.setEnabled(true);
         ServerLifecycleEvents.SERVER_STARTED.register(SeedSweepCommand::onServerStarted);
         LOGGER.info("Grounded Villages: seed-sweep harness registered (development environment)");
     }

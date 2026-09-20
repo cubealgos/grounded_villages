@@ -17,11 +17,13 @@ signature page before calling into a package you did not write.
 | `grounded_villages.hook` | root | ChunkGeneratorTerrainSampler, GenerationContext, HookDebug, HookRegistry, PieceDecision, StartDecision, TerrainSampler, VillagePieceHook, VillageStartHook |  |
 | `grounded_villages.mixin.village` | root | JigsawPlacementMixin, JigsawStructureMixin, PlacerMixin |  |
 | `grounded_villages.mixinsupport` | root | VillageTagContext |  |
+| `grounded_villages.site` | root | HeightSampler, SiteCoordinate, SiteDecision, SiteScore, SiteScorer, SiteSearch, SiteStartHook | Whole-village site selection (`docs/spec/domains/site.md`): grounded_villages.site.SiteScorer samples a candidate's footprint for height spread and water fraction over the pure grounded_villages.site.HeightSampler; grounded_villages.site.SiteSearch decides keep/shift/vanilla (grounded_villages.site.SiteDecision) and runs the bounded, deterministic search for a qualifying alternative when the vanilla start fails (`SITE-REQ-001`-004); grounded_villages.site.SiteStartHook is the live grounded_villages.hook.VillageStartHook a loader entrypoint registers into grounded_villages.hook.HookRegistry, adapting the pure logic above to and from grounded_villages.hook.TerrainSampler/BlockPos/StartDecision, and to whatever site.* grounded_villages.config.ConfigHolder currently holds. |
 | `grounded_villages.config` | root (test) | ConfigCodecTest, ConfigIoTest, ConfigMigrationsTest, ConfigModelTest |  |
 | `grounded_villages.fabric` | root (fabric) | GroundedVillagesFabric |  |
 | `grounded_villages.forge` | root (forge) | GroundedVillagesForge |  |
 | `grounded_villages.harness` | root (seedsweep) | SeedSweepCommand, SeedSweepRunner, SeedSweepStats, SeedSweepStatsTest, VillageSweepResult |  |
 | `grounded_villages.neoforge` | root (neoforge) | GroundedVillagesNeoForge |  |
+| `grounded_villages.site` | root (test) | FakeHeightSampler, SiteScorerTest, SiteSearchTest |  |
 
 | build script | what |
 |---|---|
