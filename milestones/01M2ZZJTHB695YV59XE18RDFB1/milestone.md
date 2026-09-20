@@ -3,7 +3,7 @@ schema_version: 1
 id: 01M2ZZJTHB695YV59XE18RDFB1
 key: M0
 title: Foundation
-status: backlog
+status: todo
 created_at: 2026-09-20T17:59:49Z
 ---
 
