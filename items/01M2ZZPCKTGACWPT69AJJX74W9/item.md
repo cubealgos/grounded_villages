@@ -24,13 +24,13 @@ identically.
 
 ## Acceptance criteria
 
-- [ ] NeoForge 1.21.1 and 26.2 nodes load config at startup identically to the Fabric legs
+- [x] NeoForge 1.21.1 and 26.2 nodes load config at startup identically to the Fabric legs
   (same validation, same fallback/clamp behaviour, same file path convention adapted only for the
   loader-specific directory API)
-- [ ] the mixin config is registered in `neoforge.mods.toml`'s `[[mixins]]`, no stale `refmap` key
+- [x] the mixin config is registered in `neoforge.mods.toml`'s `[[mixins]]`, no stale `refmap` key
   (NeoForge needs none — a stale one only logs a harmless warning, per
   `multi-loader-multi-version-mods-2026.md` §2)
-- [ ] manual/release-checklist item satisfied: a fresh NeoForge test world shows the same visible
+- [x] manual/release-checklist item satisfied: a fresh NeoForge test world shows the same visible
   effect (consistent ground level, no water-crossing pieces) as the Fabric legs on the same seed
 
 ## Constraints and prior findings
