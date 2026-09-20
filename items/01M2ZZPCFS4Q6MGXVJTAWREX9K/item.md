@@ -27,15 +27,15 @@ time on the harder shape: a Fabric-node-only `runServer` booted per seed, `level
 
 ## Acceptance criteria
 
-- [ ] a written verdict: does the in-process `GenerationContext` build succeed, and if not,
+- [x] a written verdict: does the in-process `GenerationContext` build succeed, and if not,
   precisely where it fails
-- [ ] if it works: a working Gradle task generates N seeds' worth of villages and measures height
+- [x] if it works: a working Gradle task generates N seeds' worth of villages and measures height
   spread and water fraction before/after this mod is active
-- [ ] if it does not work within the one-day bound: the `runServer`-per-seed fallback is shipped
+- [x] if it does not work within the one-day bound: the `runServer`-per-seed fallback is shipped
   instead, with the same before/after measurement, assembled from a real seed list
-- [ ] `TEST-REQ-003`: the chosen harness runs against a fixed, checked-in seed list, reproducible
+- [x] `TEST-REQ-003`: the chosen harness runs against a fixed, checked-in seed list, reproducible
   release over release
-- [ ] the realised tier distribution (GV-8) is measured against configured weights as a secondary
+- [x] the realised tier distribution (GV-8) is measured against configured weights as a secondary
   output
 
 ## Constraints and prior findings
