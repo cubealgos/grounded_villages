@@ -9,7 +9,7 @@ signature page before calling into a package you did not write.
 
 | project | source roots |
 |---|---|
-| `root` | `src/fabric/java`, `src/forge/java`, `src/main/java`, `src/neoforge/java`, `src/seedsweep/java`, `src/test/java` |
+| `root` | `src/fabric/java`, `src/forge/java`, `src/main/java`, `src/neoforge/java`, `src/seedsweep-neoforge/java`, `src/seedsweep/java`, `src/test/java` |
 
 | package | project | types | what |
 |---|---|---|---|
@@ -24,6 +24,7 @@ signature page before calling into a package you did not write.
 | `grounded_villages.fabric` | root (fabric) | GroundedVillagesFabric |  |
 | `grounded_villages.forge` | root (forge) | GroundedVillagesForge |  |
 | `grounded_villages.harness` | root (seedsweep) | SeedSweepCommand, SeedSweepRunner, SeedSweepStats, SeedSweepStatsTest, VillageSweepResult |  |
+| `grounded_villages.harness` | root (seedsweep-neoforge) | SeedSweepCommandNeoForge |  |
 | `grounded_villages.neoforge` | root (neoforge) | GroundedVillagesNeoForge |  |
 | `grounded_villages.piece` | root (test) | FakeHeightSampler, PieceGateTest, PieceLadderTest |  |
 | `grounded_villages.site` | root (test) | FakeHeightSampler, SiteScorerTest, SiteSearchTest |  |

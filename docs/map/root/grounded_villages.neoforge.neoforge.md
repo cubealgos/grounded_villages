@@ -6,6 +6,6 @@ Every type with its summary and every non-private constructor, method and consta
 signature is the contract; read the source only when the summary is not enough.
 
 ### `class GroundedVillagesNeoForge` — `src/neoforge/java/grounded_villages/neoforge/GroundedVillagesNeoForge.java`
-NeoForge entrypoint, shared by the 1.21.1 and 26.2 nodes (no signature drift between them).
+NeoForge entrypoint, shared by the 1.21.1 and 26.2 nodes.
 - `GroundedVillagesNeoForge(IEventBus modEventBus, ModContainer modContainer)`
 
