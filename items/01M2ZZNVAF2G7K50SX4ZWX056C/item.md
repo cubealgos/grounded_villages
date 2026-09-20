@@ -28,26 +28,34 @@ the main session wires the Forgejo origin afterward.
 
 ## Acceptance criteria
 
-- [ ] `LICENSE` is MIT, copyright cubealgos, matching every sibling mod
-- [ ] `NOTICE` credits Fabric API (Apache-2.0), flags NeoForge/Forge/Mojang-mappings licences as
+- [x] `LICENSE` is MIT, copyright cubealgos, matching every sibling mod
+- [x] `NOTICE` credits Fabric API (Apache-2.0), flags NeoForge/Forge/Mojang-mappings licences as
   to-verify, and credits "Improved Village Placement" as prior art per `DEC-009`
-- [ ] `README.md` states what the mod does in five lines, the version matrix table, install,
+- [x] `README.md` states what the mod does in five lines, the version matrix table, install,
   config path, and licence
-- [ ] `CLAUDE.md` routes only, under 60 lines, points at `docs/spec/`, states the pure-worldgen
+- [x] `CLAUDE.md` routes only, 46 lines, points at `docs/spec/`, states the pure-worldgen
   rule and the ask-never-decide rule
-- [ ] `docs/spec/` is a byte-identical copy of the vault spec (`just spec-sync` recipe added)
-- [ ] `docs/modrinth/body.md` first draft exists, crediting prior art and stating no promises
+- [x] `docs/spec/` is a byte-identical copy of the vault spec (verified with `diff -rq`;
+  `just spec-sync` recipe added)
+- [x] `docs/modrinth/body.md` first draft exists, crediting prior art and stating no promises
   beyond 1.0
-- [ ] `tools/map.py`, `tools/doctor.py`, `tools/release_notes.py` copied and adapted (doctor's
-  platform-matrix depth is GV-4's job, not this ticket's)
-- [ ] `CHANGELOG.md` has an `## Unreleased` section
-- [ ] `.ci/install-tools.sh` is executable (`chmod +x`) and copied verbatim
-- [ ] `.woodpecker.yml` copied and adjusted to name Stonecutter-shaped tasks even though GV-2
+- [x] `tools/map.py`, `tools/doctor.py`, `tools/release_notes.py` copied and adapted (doctor's
+  platform-matrix depth is GV-4's job, not this ticket's); `tools/test_map.py` copied too and
+  passes (`python3 -m unittest discover -s tools`)
+- [x] `CHANGELOG.md` has an `## Unreleased` section
+- [x] `.ci/install-tools.sh` is executable (`git ls-files -s` shows mode `100755`) and copied
+  verbatim
+- [x] `.woodpecker.yml` copied and adjusted to name Stonecutter-shaped tasks even though GV-2
   fills the real build in
-- [ ] `.gitkontor/wiki/architecture/` carries ADR 0001 (Stonecutter, one repo six nodes), ADR 0002
+- [x] `.gitkontor/wiki/architecture/` carries ADR 0001 (Stonecutter, one repo six nodes), ADR 0002
   (shared mixin source tree, no precompiled `common`), ADR 0003 (hand-rolled JSON config)
-- [ ] `kontor lint` and `kontor doctor` both clean (doctor's toolchain floors and spec-copy check
-  pass; the Stonecutter-node checks GV-4 adds do not exist yet, so are not in scope here)
+- [x] `kontor lint` clean (21/21 items, 5/5 milestones, 21/21 boards)
+- [x] `kontor doctor` (repo conformance) clean, 10/10 checks
+- [ ] `tools/doctor.py` (toolchain floors) clean — **not yet true on this machine**: it correctly
+  reports Java 25 present but Java 17 and 21 absent (only Temurin 25 is installed locally); this is
+  a real environment gap the script correctly detects, not a script defect — leaving unchecked
+  rather than papering over it. `docs/map.md`/`docs/map/` and the spec-copy checks inside it both
+  pass.
 - [ ] `chore/bootstrap` merged into `development` (out of scope for this ticket — the main
   session opens the PR; this ticket is not taken to `done`)
 
@@ -59,6 +67,15 @@ MIT, no CLA, public under `cubealgos` from the first commit — a deliberate div
 Apache-2.0-plus-CLA default and "no remote until justified," inherited rather than re-decided.
 `villager_voices` is the model repo for file shape; conventions are copied, not its content.
 Executable bits matter: `villager_voices`' own `.ci/install-tools.sh` notes a sibling once lost its
-`+x` bit in copying. `chore/bootstrap` is never merged by this ticket — the main session opens the
-PR after the local session hands off; this ticket does not reach `done`, only the acceptance
-criteria that are true locally are ticked.
+`+x` bit in copying — verified here with `git ls-files -s`, mode `100755`. `chore/bootstrap` is
+never merged by this ticket — the main session opens the PR after the local session hands off;
+this ticket does not reach `done`, only the acceptance criteria that are true locally are ticked.
+Found while working this ticket: `tools/doctor.py` needed a real reshape, not a copy — the sibling
+checks one Java floor, this mod spans three at once (17/21/25 across 1.20.1/1.21.1/26.2), so the
+check is now per-row, matching `PLATFORM-REQ-001`'s "fails naming the row" wording literally; the
+gradle-wrapper check was made skippable (like the spec-copy check already was) since GV-2, not
+GV-1, adds the wrapper. `tools/release_notes.py` also needed a real reshape, not a copy: this mod's
+own version scheme (`REL-DEC-001`, `<mod>-<mc>-<loader>`) ships up to six jars per release, unlike
+every sibling's one-jar-per-version scheme, so it now takes the target combination as an argument;
+the exact CHANGELOG-section-per-release-vs-per-jar shape is marked to confirm at GV-19/GV-21 rather
+than guessed at definitively here.
