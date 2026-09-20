@@ -474,3 +474,224 @@ village as generated" phrasing, which only reads as a meaningful description for
 lost something. **Flagged for Kevin to confirm**, same footing as every other proposed default or
 reading this fleet carries forward for the first ticket to touch it -- `PieceLadderTest`'s own
 `zeroRejectionsIsUnaffectedRegardlessOfSurvivorCount` test is the executable form of this ruling.
+
+## GV-12: NeoForge parity proof
+
+`docs/loaders.md` has the full entrypoint/mixin-declaration parity audit; this section is the live
+proof GV-5/6/7/8 each gave for Fabric, given here for the `26.2-neoforge` node -- `./gradlew
+:26.2-neoforge:runServer -Pgroundedvillages.seed=1 -Pgroundedvillages.output=... -Pgroundedvillages.runDir=...
+-Pgroundedvillages.port=<free port>` (`eula=true`, shipped-default config, `site.enabled`/
+`piece.enabled`/`tier.enabled` all `true`), then `./gradlew :26.2-neoforge:seedSweep -Pcount=3`
+(the NeoForge twin of GV-10's own task, `docs/loaders.md` "The seed-sweep harness's NeoForge
+twin") for the three-seed cross-loader comparison below.
+
+### Mixin-apply and hook-debug lines, seed 1 (`build/seedsweep/run-1/logs/latest.log`)
+
+```
+[21Sept.2026 00:46:47.099] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:.../sponge-mixin-0.17.3+mixin.0.8.7.jar Service=FML Env=SERVER
+[21Sept.2026 00:46:47.207] [main/INFO] [mixin/]: Compatibility level set to JAVA_25
+[21Sept.2026 00:46:48.144] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.4).
+[21Sept.2026 00:46:53.311] [modloading-worker-0/INFO] [grounded_villages/]: grounded_villages: wrote the config to .../run-1/config/grounded_villages.json
+[21Sept.2026 00:46:53.313] [modloading-worker-0/INFO] [grounded_villages/]: Grounded Villages: skeleton loaded (NeoForge)
+[21Sept.2026 00:46:53.343] [modloading-worker-0/INFO] [grounded_villages/seedsweep/]: Grounded Villages: seed-sweep harness registered (development environment, NeoForge)
+[21Sept.2026 00:46:58.693] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] JigsawStructureMixin#findGenerationPoint fired: village-tagged
+[21Sept.2026 00:46:58.704] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] TierRoller fired: TierAssignment[tier=VILLAGE, jigsawDepth=6, maxDistance=96]
+[21Sept.2026 00:46:59.451] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] VillageStartHook fired: Vanilla[]
+[21Sept.2026 00:46:59.474] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] PieceGate fired: reject street (WATER)
+[21Sept.2026 00:48:31.209] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] PieceGate fired: reject street (WATER)
+[21Sept.2026 00:48:31.383] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] PieceGate fired: reject street (HEIGHT_DEVIATION)
+[21Sept.2026 00:48:31.388] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] PieceLadder fired: relabelled hamlet (was VILLAGE)
+[21Sept.2026 00:48:31.388] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] PieceLadder fired: shrink (27 non-street, 6 rejected)
+[21Sept.2026 00:48:34.763] [Server thread/INFO] [grounded_villages/seedsweep/]: seed 1: village minecraft:village_plains at BlockPos{x=640, y=0, z=816} -- 52 pieces, height spread 3.0, water fraction 0.0, tier hamlet, rejected 3w/3h, ladder shrink (87815 ms)
+```
+
+No SpongePowered "Mixing X from grounded_villages.mixins.json into Y" summary line appears at
+`INFO` (that line is `DEBUG`-only, `-Dmixin.debug.verbose=true` not set for this run) -- the
+`JigsawStructureMixin#findGenerationPoint fired` / `TierRoller fired` / `VillageStartHook fired` /
+`PieceGate fired` / `PieceLadder fired` lines above are stronger evidence regardless: each one
+only exists inside this mod's own injected mixin body, so its presence in the log proves the
+mixin transform actually applied and ran, not merely that Mixin loaded the config. `Compatibility
+level set to JAVA_25` also confirms `grounded_villages.mixins.json`'s `compatibilityLevel` template
+variable resolved correctly off `build.neoforge.gradle.kts`'s own `requiredJava.majorVersion` for
+this node (`docs/loaders.md`'s `[[mixins]]` section).
+
+### Cross-loader determinism: three seeds, NeoForge vs. the Fabric baseline
+
+Same shipped-default config (`site.enabled`/`piece.enabled`/`tier.enabled` all `true`,
+`site.max_height_spread=12`, `piece.max_height_deviation=6`, tier weights `30/45/20/5`), same
+three seeds (`docs/baseline/seeds.txt`'s first three) already reported in
+`docs/baseline/grounded-26.2-fabric-10-seeds-all.json` (GV-7's own "all domains on" baseline).
+
+| seed | field | Fabric (`26.2-fabric`) | NeoForge (`26.2-neoforge`) | match? |
+|---|---|---|---|---|
+| 1 | start | (640, 0, 816) | (640, 0, 816) | yes |
+| 1 | pieces | 52 | 52 | yes |
+| 1 | height spread | 3.0 | 3.0 | yes |
+| 1 | water fraction | 0.0% | 0.0% | yes |
+| 1 | sample count | 289 | 289 | yes |
+| 1 | tier / rejected (w/h) / outcome | hamlet / 3/3 / shrink | hamlet / 3/3 / shrink | yes |
+| 2 | start | (-416, 0, 240) | (-416, 0, 240) | yes |
+| 2 | pieces | 46 | 46 | yes |
+| 2 | height spread | 2.0 | 2.0 | yes |
+| 2 | water fraction | 0.0% | 0.0% | yes |
+| 2 | sample count | 231 | 231 | yes |
+| 2 | tier / rejected (w/h) / outcome | hamlet / 0/0 / unaffected | hamlet / 0/0 / unaffected | yes |
+| 3 | start | (256, 0, 848) | (256, 0, 848) | yes |
+| 3 | pieces | 30 | 30 | yes |
+| 3 | height spread | 2.0 | 2.0 | yes |
+| 3 | water fraction | 0.0% | 0.0% | yes |
+| 3 | sample count | 112 | 112 | yes |
+| 3 | tier / rejected (w/h) / outcome | hamlet / 0/2 / shrink | hamlet / 0/2 / shrink | yes |
+
+**3/3 seeds match on every field** -- structure, exact start position, piece count, height spread,
+water fraction, sample count, tier, per-cause rejection counts, and ladder outcome -- down to the
+same last decimal and integer GV-7's own committed Fabric baseline reports. Only `runtimeMillis`
+differs (87815/15973/53195 ms NeoForge vs. 76301/14793/44958 ms Fabric, both dominated by cold-JVM
+and `findNearestMapStructure`'s own broad structure-set scan per `docs/baseline/README.md`'s
+earlier "Runtime" sections, not by per-piece sampling), which is wall-clock noise, not a placement
+difference. **This is the real parity test GV-12's own ticket wording asks for**: identical
+`SiteSelector`/`PieceGate`/`TierRoller` decisions, for the same seed, run through NeoForge's own
+mixin/entrypoint wiring instead of Fabric's -- confirming `docs/loaders.md`'s parity-table finding
+that `HookRegistry`/`ConfigHolder` reach the same state, populated the same way, before the first
+structure generates, on every loader.
+
+### 1.21.1-neoforge: the same proof, no harness needed
+
+The `run` task exists on this node too, so per this ticket's own instruction the same class of
+proof was run there: `./gradlew :1.21.1-neoforge:runServer -Pgroundedvillages.runDir=build/manualproof-1211`
+(`eula=true`, `level-seed=1`, `JAVA_TOOL_OPTIONS=-Dgrounded_villages.debug=true` -- the seed-sweep
+harness itself is `26.2-neoforge`-only, `docs/loaders.md`, so this node has no automated hook-debug
+toggle of its own; the JVM-level system property flag reaches `HookDebug` identically without one).
+Vanilla's own spawn-area pregeneration alone (no `/locate`/`/forceload` needed -- both were
+attempted via a FIFO'd stdin, which this task does not wire through to the forked server process,
+a real but minor harness gap, not investigated further since spawn-area pregeneration already gave
+ample evidence) was enough to hit a village-tagged structure:
+
+```
+[01:00:15] [main/INFO] [mixin/]: Compatibility level set to JAVA_21
+[01:00:16] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.3).
+[01:00:19] [modloading-worker-0/INFO] [grounded_villages/]: grounded_villages: wrote the config to .../build/manualproof-1211/config/grounded_villages.json
+[01:00:19] [modloading-worker-0/INFO] [grounded_villages/]: Grounded Villages: skeleton loaded (NeoForge)
+[01:00:21] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] JigsawStructureMixin#findGenerationPoint fired: not village-tagged
+[01:00:22] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] JigsawStructureMixin#findGenerationPoint fired: village-tagged
+[01:00:22] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] TierRoller fired: TierAssignment[tier=VILLAGE, jigsawDepth=6, maxDistance=96]
+[01:00:22] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] VillageStartHook fired: Vanilla[]
+[01:00:22] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] PieceGate fired: reject street (WATER)
+[01:00:22] [worldgen/INFO] [grounded_villages/hook/]: [grounded_villages] PieceGate fired: reject building (WATER)
+[01:00:31] [Server thread/INFO] [minecraft/DedicatedServer]: Done (10.594s)! For help, type "help"
+```
+
+`Compatibility level set to JAVA_21` (vs. 26.2's `JAVA_25`) confirms the mixin config's own
+`compatibilityLevel` template variable resolves correctly per node on NeoForge too, matching
+`build.neoforge.gradle.kts`'s shared `requiredJava.majorVersion` expansion. 73 hook-fired lines
+total during this one run (spawn-area pregeneration alone), the same evidence class as the
+26.2-neoforge proof above. `FMLEnvironment` drift is real (`docs/loaders.md`), but everything
+downstream of it -- config load, hook registration, mixin transform, hook firing -- is identical
+on both NeoForge nodes.
+
+### Test counts (verbatim)
+
+- `:26.2-neoforge:harnessStatsTest` (the same hand-rolled `SeedSweepStatsTest` GV-10 wrote,
+  re-run off this node's own compiled classes): **20/20 passed**.
+- `:26.2-neoforge:check` and `:1.21.1-neoforge:check`: green, no regressions.
+- `:26.2-neoforge:compileJava` / `:1.21.1-neoforge:compileJava`: green (this ticket's own
+  reflection-based `FMLEnvironment` fix, `docs/loaders.md`, compiles unchanged on both nodes --
+  the Stonecutter-preprocessor-split first attempt did not, see that same section for why).
+- `just check` (`chiseledCheck` on all six nodes, `chiseledBuild`, `map-check`, `tools/`'s own
+  13 Python unit tests): **BUILD SUCCESSFUL**, zero `FAILED` lines anywhere in the run.
+## GV-15: Forge proof
+
+The Forge 1.20.1 leg's own written verdict for `docs/spec/contracts/platform-matrix.md`'s "Third
+correction" -- the session log excerpts and timings behind that entry's summary. No `seedSweep`
+node switch exists for this leg yet (GV-12, in parallel), so this is a manual live-server session,
+per the ticket's own fallback instruction, not the harness's JSON output.
+
+### Build and jar inspection
+
+`./gradlew :1.20.1-forge:build` (clean, single-target): **BUILD SUCCESSFUL in 7s**, no `Cannot
+remap` or other Mixin warnings. `versions/1.20.1-forge/build/libs/grounded_villages-forge-0.1.0+1.20.1.jar`
+carries `MixinConfigs: grounded_villages.mixins.json` in its manifest and a 4.1KB
+`grounded_villages.refmap.json` with real SRG (`m_...`) targets for every Minecraft-side member the
+three mixins touch. Full detail in `docs/spec/contracts/platform-matrix.md`'s own "Third
+correction" section, including the missing-`"refmap"`-key bug this ticket found and fixed.
+
+### Production server: before the fix
+
+Forge 47.4.23 installed via the official installer (`forge-1.20.1-47.4.23-installer.jar`, **8.6MB,
+downloaded in ~2s**; `--installServer` under Java 17, **27.7s**, ~160MB of libraries including the
+real SRG-named `server-1.20.1-20230612.114412-srg.jar`) into a scratch directory, `eula=true`, the
+jar built above copied into `mods/`. First boot, before the `"refmap"` key fix:
+
+```
+[main/FATAL] [mixin/]: Mixin apply failed grounded_villages.mixins.json:village.JigsawStructureMixin
+  -> net.minecraft.world.level.levelgen.structure.structures.JigsawStructure:
+  org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException Critical injection
+  failure: @Inject annotation on gv$gateOnVillageTag could not find any targets matching
+  'findGenerationPoint' in net.minecraft.world.level.levelgen.structure.structures.JigsawStructure.
+  No refMap loaded.
+```
+
+Server crashes outright at world load, every time -- this is the actual SRG-runtime failure mode
+the ticket's own acceptance criteria are checking for, caught live rather than assumed away by a
+dev-environment boot (MDG legacyforge dev runs are Mojang-named, so this exact bug is invisible
+there -- confirmed separately via `:1.20.1-forge:runServer`, which never hit it).
+
+### Production server: after the fix
+
+Same installed server, same `mods/` jar rebuilt with the fix, `-Dmixin.debug.verbose=true
+-Dgrounded_villages.debug=true` added to `user_jvm_args.txt`. Clean boot:
+
+```
+[mixin/]: mixin.env.refMapRemappingEnv : - <searge>
+...
+[mixin/]: Mixing village.JigsawStructureMixin from grounded_villages.mixins.json into net.minecraft.world.level.levelgen.structure.structures.JigsawStructure
+[mixin/]: Mixing village.JigsawPlacementMixin from grounded_villages.mixins.json into net.minecraft.world.level.levelgen.structure.pools.JigsawPlacement
+[mixin/]: Mixing village.PlacerMixin from grounded_villages.mixins.json into net.minecraft.world.level.levelgen.structure.pools.JigsawPlacement$Placer
+[minecraft/DedicatedServer]: Done (20.157s)! For help, type "help"
+```
+
+`mixin.env.refMapRemappingEnv : <searge>` is Mixin's own confirmation this is the SRG runtime, not
+a deobfuscated dev one. Villages within render distance of spawn generated during the normal
+spawn-area pre-generation pass already, firing the full hook chain unprompted -- **13 village
+starts, 264 `PieceGate` decisions** (both `accept` and `reject ... (WATER)` / `reject ...
+(HEIGHT_DEVIATION)` reasons observed), across a mix of `HAMLET`/`VILLAGE`/`TOWN` tier rolls, all on
+the real SRG bytecode.
+
+### Seed comparison against the Fabric baseline
+
+`/locate structure minecraft:village_plains` + `/forceload` around the result, `level-seed` set to
+match `docs/baseline/seeds.txt`'s first entries, compared against
+`docs/baseline/grounded-26.2-fabric-10-seeds-all.json`'s own seed rows (all domains enabled,
+shipped-default config, `docs/baseline/README.md`'s own "GV-7" table above):
+
+| seed | `/locate` start (Forge) | Fabric baseline start | match | tier (Forge) | tier (Fabric) | non-street rejected (Forge) | non-street rejected (Fabric, w+h) |
+|---|---|---|---|---|---|---|---|
+| 1 | `[640, ~, 816]` | `(640, 0, 816)` | yes | hamlet (shrunk from VILLAGE) | hamlet | 6 | 6 (3+3) |
+| 2 | `[-416, ~, 240]` | `(-416, 0, 240)` | yes | not measured (see below) | hamlet | not measured | 0 (0+0) |
+
+Seed 1: exact position match, exact final-tier match, exact non-street-rejected-count match
+(`PieceLadder fired: shrink (27 non-street, 6 rejected)`, then `relabelled hamlet (was VILLAGE)`).
+Seed 2: `/locate`'s own structure-set position matched Fabric's exactly (loader-independent, as
+expected -- vanilla's structure-set placement math is seed-derived, not mixin-dependent), but the
+`/forceload` of that village's chunks did not finish within this session's own time budget --
+consistent with `docs/baseline/README.md`'s own GV-7 "watchdog" finding above (the shrink/move/
+vanilla ladder can cost up to 3x a full jigsaw-assembly attempt, and this fleet has already seen a
+single tick blow past 60s on a costly candidate). Not pursued further: this is supplementary
+comparison data, not one of the ticket's own acceptance criteria, and the same live proof already
+stands on seed 1 plus the unprompted 13-village/264-decision sample above. Seed 3 not attempted for
+the same reason.
+
+### NOTICE licence re-verification
+
+`raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/LICENSE.txt` read live 2026-09-21:
+"Unless noted below, Minecraft Forge, Forge Mod Loader, and all parts herein are licensed under the
+terms of the LGPL 2.1" -- confirms `NOTICE`'s existing LGPL-2.1 line by reading the file text
+directly, not GitHub's own licence auto-detector (which currently reports `NOASSERTION` for this
+specific repository -- noted in `platform-matrix.md`'s own "Third correction" for the next
+verifier). No `NOTICE` change needed; the existing line was already correct, now independently
+re-confirmed per this ticket's own acceptance criterion.
+
+### Full-fleet build
+
+`./gradlew chiseledBuild chiseledCheck --continue`: **BUILD SUCCESSFUL in 12s**, all six nodes,
+zero `Cannot remap` or other Mixin warnings anywhere in the log.

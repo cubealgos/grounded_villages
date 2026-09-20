@@ -65,6 +65,10 @@ gametest:
 sweep count="10":
     ./gradlew :26.2-fabric:seedSweep -Pcount={{count}}
 
+# GV-12: the same sweep on 26.2-neoforge -- docs/loaders.md's cross-loader determinism check.
+sweep-neoforge count="10":
+    ./gradlew :26.2-neoforge:seedSweep -Pcount={{count}}
+
 # GV-8: proves a fixed seed rolls a fixed tier (runs the dedicated server twice, diffs the
 # result). 26.2-fabric only, not wired into `check` (see build.fabric.gradle.kts's own comment on
 # `tierGameTest` for why).
@@ -82,6 +86,13 @@ server node:
 # Refresh docs/spec/ from the vault; the vault is authoritative.
 spec-sync:
     rsync -a --delete "{{vault_spec}}/" docs/spec/
+
+# Render the Modrinth icon (GV-23): vanilla's own flat village bell item sprite, on the cubealgos
+# navy badge, the way create_villager_customers composes the vanilla emerald. Reads it from a
+# local Minecraft client jar found by globbing the Gradle cache; pass --jar PATH, or --pick to
+# write one of the other rendered candidates instead, via tools/icon.py directly.
+icon:
+    python3 tools/icon.py
 
 # Regenerate docs/map.md and docs/map/ from the source.
 map:
