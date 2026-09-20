@@ -27,17 +27,17 @@ generalise cleanly to per-piece checks (`04-architecture.md`).
 
 ## Acceptance criteria
 
-- [ ] `PIECE-REQ-001` through `PIECE-REQ-007` implemented
-- [ ] streets and buildings use byte-identical criteria and code path — no special case for
+- [x] `PIECE-REQ-001` through `PIECE-REQ-007` implemented
+- [x] streets and buildings use byte-identical criteria and code path — no special case for
   `TERRAIN_MATCHING` vs `RIGID` beyond how each already computes its own candidate height
-- [ ] shrink: surviving pieces >= `tier.hamlet_minimum_pieces` (proposed default 4) keeps the
+- [x] shrink: surviving pieces >= `tier.hamlet_minimum_pieces` (proposed default 4) keeps the
   village, relabelled `hamlet` regardless of its originally rolled tier
-- [ ] move: falls through to GV-6's bounded search, up to `site.search_attempts` shifted
+- [x] move: falls through to GV-6's bounded search, up to `site.search_attempts` shifted
   candidates, before the vanilla fallback
-- [ ] vanilla fallback: confirmed no world ever ends up with a missing village
-- [ ] unit tests: accept/reject given synthetic footprint/height inputs; a shrink-triggering case;
+- [x] vanilla fallback: confirmed no world ever ends up with a missing village
+- [x] unit tests: accept/reject given synthetic footprint/height inputs; a shrink-triggering case;
   a move-triggering case
-- [ ] `piece.enabled: false` skips per-piece rejection entirely (`PIECE-REQ-005`)
+- [x] `piece.enabled: false` skips per-piece rejection entirely (`PIECE-REQ-005`)
 
 ## Constraints and prior findings
 
