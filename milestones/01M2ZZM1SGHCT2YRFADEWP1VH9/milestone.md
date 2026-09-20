@@ -3,7 +3,7 @@ schema_version: 1
 id: 01M2ZZM1SGHCT2YRFADEWP1VH9
 key: M2
 title: "Wave 2: Forge 1.20.1"
-status: backlog
+status: todo
 created_at: 2026-09-20T18:00:29Z
 ---
 
