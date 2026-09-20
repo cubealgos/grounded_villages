@@ -22,15 +22,15 @@ verbatim — confirm the shipped defaults first, then describe them.
 
 ## Acceptance criteria
 
-- [ ] the body credits "Improved Village Placement" as prior art and positions this mod as the
+- [x] the body credits "Improved Village Placement" as prior art and positions this mod as the
   superset (height + water + size tiers), never as a competitor to avoid naming
-- [ ] the config table in the body matches `domains/config.md` §3's defaults **as actually
+- [x] the config table in the body matches `domains/config.md` §3's defaults **as actually
   shipped** by GV-6/GV-7/GV-8/GV-9, not the spec's proposed numbers if they changed at those
   tickets
-- [ ] no promise beyond 1.0 scope — `00-context.md` "what it will not do" is respected verbatim
-- [ ] `REL-REQ-003`: the body states the default thresholds, tier weights, budget multipliers, and
+- [x] no promise beyond 1.0 scope — `00-context.md` "what it will not do" is respected verbatim
+- [x] `REL-REQ-003`: the body states the default thresholds, tier weights, budget multipliers, and
   performance cap in force for the release it accompanies
-- [ ] `REL-REQ-004`: states plainly which combinations are new in Wave 1 and which remain `planned`
+- [x] `REL-REQ-004`: states plainly which combinations are new in Wave 1 and which remain `planned`
 
 ## Constraints and prior findings
 
