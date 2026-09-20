@@ -16,6 +16,9 @@
   "entrypoints": {
     "main": [
       "grounded_villages.fabric.GroundedVillagesFabric"
+    ],
+    "fabric-gametest": [
+      "grounded_villages.fabric.gametest.PieceGateFabricGameTests"
     ]
   },
   "mixins": [
