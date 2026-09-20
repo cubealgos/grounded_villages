@@ -21,13 +21,13 @@ nothing ships that CI has not actually built green.
 
 ## Acceptance criteria
 
-- [ ] each of the six Wave 1-2 combinations has its own listing/version entry, built from GV-13's
+- [x] each of the six Wave 1-2 combinations has its own listing/version entry, built from GV-13's
   positioning copy
-- [ ] `REL-REQ-004`: the first release notes of each wave state plainly which combinations are new
+- [x] `REL-REQ-004`: the first release notes of each wave state plainly which combinations are new
   in that wave and which remain `planned`
-- [ ] `REL-REQ-002`: each version entry's release notes list the exact Minecraft version, loader,
+- [x] `REL-REQ-002`: each version entry's release notes list the exact Minecraft version, loader,
   and loader version tested for that specific jar
-- [ ] no `Game versions` array spans a Java-version boundary or a loader (mirrors GV-19's own check)
+- [x] no `Game versions` array spans a Java-version boundary or a loader (mirrors GV-19's own check)
 
 ## Constraints and prior findings
 
