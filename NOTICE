@@ -1,0 +1,27 @@
+Grounded Villages is MIT-licensed (LICENSE).
+
+It runs on and is built against:
+- Fabric Loader and Fabric API (FabricMC), Apache-2.0.
+- NeoForge (NeoForged): licence to verify at the first ticket (GV-2), before the NeoForge nodes
+  land.
+- Minecraft Forge (the Forge project), 1.20.1 only: licence to verify at its own ticket (GV-15),
+  before the Forge leg lands.
+- Minecraft (Mojang), via Mojang's own official mappings on every node: this mod adds no block,
+  item, or entity of its own; no Mojang asset (texture, model, or sound) is copied or redistributed.
+
+## Prior art
+
+"Improved Village Placement" (Apollounknowndev, MIT licence,
+https://modrinth.com/mod/improved-village-placement, the same Fabric/Forge/NeoForge 1.20.1-26.2
+matrix this mod targets) already rejects whole village sites by height variance — the site-selection
+half of this mod's own scope. Grounded Villages is built independently, with no code reuse from that
+project; it is credited here as prior art, not named as competition. Grounded Villages adds height
+*plus* water *plus* size tiers, together, in one mod — the superset "Improved Village Placement" does
+not offer (`decisions/DEC-009-prior-art.md`).
+
+## What this mod does not ship
+
+No original creative asset of any kind — no lines, no audio, no new textures, models, or structure
+pieces. Every piece this mod places or rejects is a piece vanilla or a datapack author already
+defined. There is no project-authored-content notice obligation to track here, only the dependency
+one above.
