@@ -1,7 +1,9 @@
 {
   "required": true,
+  "minVersion": "0.8",
   "package": "grounded_villages.mixin",
   "compatibilityLevel": "${java}",
+  "refmap": "grounded_villages.refmap.json",
   "mixins": [
     "village.JigsawStructureMixin",
     "village.JigsawPlacementMixin",
