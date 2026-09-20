@@ -14,6 +14,9 @@ signature page before calling into a package you did not write.
 | package | project | types | what |
 |---|---|---|---|
 | `grounded_villages.config` | root | ConfigBounds, ConfigCodec, ConfigDefaults, ConfigHolder, ConfigIo, ConfigJson, ConfigMigrations, ConfigModel | The one config file this mod writes (`docs/spec/contracts/data-contract.md` DATA-REQ-002): a pure Java model (grounded_villages.config.ConfigModel) and its parser/serialiser (grounded_villages.config.ConfigCodec), built on a small hand-rolled, dependency-free JSON reader (grounded_villages.config.ConfigJson) rather than a config library (`decisions/DEC-008-config-file.md`). |
+| `grounded_villages.hook` | root | ChunkGeneratorTerrainSampler, GenerationContext, HookDebug, HookRegistry, PieceDecision, StartDecision, TerrainSampler, VillagePieceHook, VillageStartHook |  |
+| `grounded_villages.mixin.village` | root | JigsawPlacementMixin, JigsawStructureMixin, PlacerMixin |  |
+| `grounded_villages.mixinsupport` | root | VillageTagContext |  |
 | `grounded_villages.config` | root (test) | ConfigCodecTest, ConfigIoTest, ConfigMigrationsTest, ConfigModelTest |  |
 | `grounded_villages.fabric` | root (fabric) | GroundedVillagesFabric |  |
 | `grounded_villages.forge` | root (forge) | GroundedVillagesForge |  |

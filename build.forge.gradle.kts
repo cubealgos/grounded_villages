@@ -45,18 +45,26 @@ legacyForge {
     }
 }
 
-// Mixin refmap generation is NOT wired yet (docs/spec/contracts/platform-matrix.md "Mappings",
-// verified against neoforged/ModDevGradle's own LEGACY.md "Mixins" section, 2026-09-20): the
-// `mixin { add(...); config(...) }` block plus the `org.spongepowered:mixin:...:processor`
-// annotationProcessor makes MDG's `reobfJar` require an AP-generated
-// `grounded_villages.refmap.json.mappings.tsrg`, which the AP only writes when a `@Mixin`-
-// annotated class exists to process -- GV-2 ships zero (skeleton only, PIECE/SITE domains land in
-// their own tickets). Verified live 2026-09-20: wiring the block with no `@Mixin` classes fails
-// `reobfJar` with `FileNotFoundException` on that generated file. The mixin-config JSON stub is
-// still referenced below via the jar manifest's `MixinConfigs` attribute (SpongePowered Mixin
-// bootstraps itself via ModLauncher regardless, `contracts/platform-matrix.md` "Mixin support
-// story", and loads a zero-mixin config as a no-op); the `mixin {}` block and its AP dependency
-// return once a real `@Mixin` class lands (FIXME GV-15 tracks the Forge leg generally).
+// Mixin refmap generation, wired back in now that real `@Mixin` classes exist (GV-5,
+// grounded_villages.mixin.village) -- GV-2 left this block out deliberately (see its own git
+// history) because MDG legacyforge's `reobfJar` requires an AP-generated
+// `grounded_villages.refmap.json.mappings.tsrg`, and the Mixin annotation processor only writes
+// that file when there is at least one `@Mixin`-annotated class to process; wiring the block with
+// zero mixins (GV-2's skeleton) failed `reobfJar` with a `FileNotFoundException` on that
+// generated file, verified live at the time. `mixin {}` is a top-level extension registered by
+// the `legacyforge` plugin (confirmed by decompiling `LegacyForgeModDevPlugin`,
+// `moddev-gradle-2.0.147.jar`, GV-5: `project.extensions.create("mixin", MixinExtension.class,
+// ...)`), not nested inside `legacyForge {}`.
+mixin {
+    add(sourceSets.main.get(), "grounded_villages.refmap.json")
+    config("grounded_villages.mixins.json")
+}
+
+dependencies {
+    // Confirmed present on `maven.minecraftforge.net`, HTTP 200 (docs/spec/contracts/platform-matrix.md
+    // "Verified coordinates (GV-2)"); required for the Mixin AP to run at all on this leg.
+    annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
+}
 
 dependencies {
     // Plain JUnit 5/Jupiter for the shared src/test/java tree (GV-9), no Minecraft classpath
