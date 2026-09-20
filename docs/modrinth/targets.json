@@ -1,5 +1,5 @@
 {
-  "_comment": "Modrinth publish targets, one per Stonecutter version node (settings.gradle.kts, DEC-004-versions-and-toolchain.md). GV-19 machinery: modrinth-publish.py version --repo . --targets docs/modrinth/targets.json [--dry-run|--yes]. Shared listing fields (title, slug, dependencies, channel, ...) still come from docs/modrinth/body.md; only jar/game_versions/loaders/version_number/version_name/changelog_file are per target here. version_number follows release.md's REL-DEC-001 scheme, `<mod>-<mc>-<loader>`; jar paths follow the mod.version pinned in stonecutter.properties.toml, under Stonecutter's own chiseledBuild collection directory `build/libs/<mod version>/`. tools/doctor.py's targets check reads this file's `node` field against settings.gradle.kts's own node list so a new node (GV-17) cannot be forgotten here.",
+  "_comment": "Modrinth publish targets, one per Stonecutter version node (settings.gradle.kts, DEC-004-versions-and-toolchain.md). GV-19 machinery: modrinth-publish.py version --repo . --targets docs/modrinth/targets.json [--dry-run|--yes]. Shared listing fields (title, slug, dependencies, channel, ...) still come from docs/modrinth/body.md; only jar/game_versions/loaders/version_number/version_name/changelog_file are per target here. version_number follows release.md's REL-DEC-001 scheme, `<mod>-<mc>-<loader>`; jar paths follow the mod.version pinned in stonecutter.properties.toml, under Stonecutter's own chiseledBuild collection directory `build/libs/<mod version>/`. tools/doctor.py's targets check reads this file's `node` field against settings.gradle.kts's own node list so a new node (GV-17) cannot be forgotten here. GV-20: changelog_file now points at a per-target notes file, `dist/notes/<version_number>.md`, that `tools/target_notes.py` (`just target-notes`) generates fresh from CHANGELOG.md plus the platform matrix's own per-node tested-toolchain and wave-statement data (REL-REQ-002/REL-REQ-004) -- run that before `just publish-dry`/a real publish, since `dist/` is gitignored build output, not checked in.",
   "targets": [
     {
       "node": "1.20.1-fabric",
@@ -8,7 +8,7 @@
       "loaders": ["fabric"],
       "version_number": "grounded_villages-1.20.1-fabric",
       "version_name": "Grounded Villages 0.1.0 for Fabric 1.20.1",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.20.1-fabric.md"
     },
     {
       "node": "1.20.1-forge",
@@ -17,7 +17,7 @@
       "loaders": ["forge"],
       "version_number": "grounded_villages-1.20.1-forge",
       "version_name": "Grounded Villages 0.1.0 for Forge 1.20.1",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.20.1-forge.md"
     },
     {
       "node": "1.21.1-fabric",
@@ -26,7 +26,7 @@
       "loaders": ["fabric"],
       "version_number": "grounded_villages-1.21.1-fabric",
       "version_name": "Grounded Villages 0.1.0 for Fabric 1.21.1",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.21.1-fabric.md"
     },
     {
       "node": "1.21.1-neoforge",
@@ -35,7 +35,7 @@
       "loaders": ["neoforge"],
       "version_number": "grounded_villages-1.21.1-neoforge",
       "version_name": "Grounded Villages 0.1.0 for NeoForge 1.21.1",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.21.1-neoforge.md"
     },
     {
       "node": "1.21.4-fabric",
@@ -44,7 +44,7 @@
       "loaders": ["fabric"],
       "version_number": "grounded_villages-1.21.4-fabric",
       "version_name": "Grounded Villages 0.1.0 for Fabric 1.21.4",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.21.4-fabric.md"
     },
     {
       "node": "1.21.4-neoforge",
@@ -53,7 +53,7 @@
       "loaders": ["neoforge"],
       "version_number": "grounded_villages-1.21.4-neoforge",
       "version_name": "Grounded Villages 0.1.0 for NeoForge 1.21.4",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.21.4-neoforge.md"
     },
     {
       "node": "1.21.5-fabric",
@@ -62,7 +62,7 @@
       "loaders": ["fabric"],
       "version_number": "grounded_villages-1.21.5-fabric",
       "version_name": "Grounded Villages 0.1.0 for Fabric 1.21.5",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.21.5-fabric.md"
     },
     {
       "node": "1.21.5-neoforge",
@@ -71,7 +71,7 @@
       "loaders": ["neoforge"],
       "version_number": "grounded_villages-1.21.5-neoforge",
       "version_name": "Grounded Villages 0.1.0 for NeoForge 1.21.5",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.21.5-neoforge.md"
     },
     {
       "node": "1.21.8-fabric",
@@ -80,7 +80,7 @@
       "loaders": ["fabric"],
       "version_number": "grounded_villages-1.21.8-fabric",
       "version_name": "Grounded Villages 0.1.0 for Fabric 1.21.8",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.21.8-fabric.md"
     },
     {
       "node": "1.21.8-neoforge",
@@ -89,7 +89,7 @@
       "loaders": ["neoforge"],
       "version_number": "grounded_villages-1.21.8-neoforge",
       "version_name": "Grounded Villages 0.1.0 for NeoForge 1.21.8",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-1.21.8-neoforge.md"
     },
     {
       "node": "26.2-fabric",
@@ -98,7 +98,7 @@
       "loaders": ["fabric"],
       "version_number": "grounded_villages-26.2-fabric",
       "version_name": "Grounded Villages 0.1.0 for Fabric 26.2",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-26.2-fabric.md"
     },
     {
       "node": "26.2-neoforge",
@@ -107,7 +107,7 @@
       "loaders": ["neoforge"],
       "version_number": "grounded_villages-26.2-neoforge",
       "version_name": "Grounded Villages 0.1.0 for NeoForge 26.2",
-      "changelog_file": "CHANGELOG.md"
+      "changelog_file": "dist/notes/grounded_villages-26.2-neoforge.md"
     }
   ]
 }

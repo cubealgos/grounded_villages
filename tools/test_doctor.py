@@ -431,5 +431,91 @@ class TargetJarsTest(DoctorFixture):
         self.assertIn("FAIL  target jars: mod.id/mod.version missing from stonecutter.properties.toml", proc.stdout)
 
 
+class GameVersionsTest(DoctorFixture):
+    """GV-20: `docs/modrinth/targets.json`'s own `game_versions` array must never span a
+    Java-version boundary, and `loaders` must always name exactly one loader
+    (`operations/release.md`'s Modrinth publish matrix; mirrors GV-19's own `check_targets`
+    shape, "fails naming the row")."""
+
+    def setUp(self):
+        super().setUp()
+        write_provisioned_jdk(self.gradle_home / "jdks", "eclipse_adoptium-17", "17.0.20.1", "17.0.20.1")
+        write_provisioned_jdk(self.gradle_home / "jdks", "eclipse_adoptium-21", "21.0.12.1", "21.0.12.1")
+        write_provisioned_jdk(self.gradle_home / "jdks", "eclipse_adoptium-25", "25.0.1", "25.0.1", macos=False)
+
+    def test_every_node_s_single_version_array_passes(self):
+        proc = self.run_doctor()
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("ok   game versions (1.20.1-fabric): ['1.20.1'] within Java 17", proc.stdout)
+        self.assertIn("ok   game versions (1.21.1-neoforge): ['1.21.1'] within Java 21", proc.stdout)
+        self.assertIn("ok   game versions (26.2-fabric): ['26.2'] within Java 25", proc.stdout)
+
+    def test_an_array_spanning_a_java_boundary_fails_naming_only_that_node(self):
+        """1.20.1 is Java 17, 1.21.1 is Java 21 -- a target claiming both at once is exactly the
+        bug this check exists to catch."""
+        doc = json.loads(targets_json(SETTINGS_GRADLE_NODES))
+        for t in doc["targets"]:
+            if t["node"] == "1.21.1-fabric":
+                t["game_versions"] = ["1.21.1", "1.20.1"]
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(json.dumps(doc))
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn(
+            "FAIL  game versions (1.21.1-fabric): ['1.21.1', '1.20.1'] spans Java majors [17, 21]",
+            proc.stdout,
+        )
+        # every other node's own game_versions is unaffected by this one node's drift
+        self.assertIn("ok   game versions (1.20.1-fabric)", proc.stdout)
+
+    def test_a_multi_version_array_within_one_java_generation_passes(self):
+        """The one legitimate multi-tag case release.md allows: every tag in the same
+        Java/toolchain generation (here, two Java-21 point releases)."""
+        doc = json.loads(targets_json(SETTINGS_GRADLE_NODES))
+        for t in doc["targets"]:
+            if t["node"] == "1.21.1-fabric":
+                t["game_versions"] = ["1.21.1", "1.21.4"]
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(json.dumps(doc))
+        proc = self.run_doctor()
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("ok   game versions (1.21.1-fabric): ['1.21.1', '1.21.4'] within Java 21", proc.stdout)
+
+    def test_two_loaders_on_one_target_fails(self):
+        doc = json.loads(targets_json(SETTINGS_GRADLE_NODES))
+        for t in doc["targets"]:
+            if t["node"] == "1.21.1-neoforge":
+                t["loaders"] = ["neoforge", "fabric"]
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(json.dumps(doc))
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn(
+            "FAIL  game versions (1.21.1-neoforge): loaders must name exactly one loader, "
+            "got ['neoforge', 'fabric']",
+            proc.stdout,
+        )
+
+    def test_an_unrecognised_minecraft_version_fails_naming_it(self):
+        doc = json.loads(targets_json(SETTINGS_GRADLE_NODES))
+        for t in doc["targets"]:
+            if t["node"] == "26.2-fabric":
+                t["game_versions"] = ["26.99"]
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(json.dumps(doc))
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn(
+            "FAIL  game versions (26.2-fabric): no known Java major for ['26.99'] in ['26.99'] -- add it to MC_JAVA",
+            proc.stdout,
+        )
+
+    def test_an_empty_game_versions_array_fails(self):
+        doc = json.loads(targets_json(SETTINGS_GRADLE_NODES))
+        for t in doc["targets"]:
+            if t["node"] == "1.20.1-forge":
+                t["game_versions"] = []
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(json.dumps(doc))
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("FAIL  game versions (1.20.1-forge): game_versions is empty", proc.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
