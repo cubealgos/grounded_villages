@@ -139,6 +139,141 @@ first-village-near-spawn placements outright. That is exactly the shape SITE's b
 `site.md` §7's open question against these numbers before locking the defaults in, rather than
 this ticket deciding it inline.
 
+## GV-6: `SiteScorer`/`SiteSearch` wired live, the same 10-seed sweep re-run
+
+`site/SiteScorer` and `site/SiteSearch` (`grounded_villages.site`, zero Minecraft imports --
+`04-architecture.md` `ARCH-DEC-002`) implement `SITE-REQ-001`-`006`; `SiteStartHook` is the
+Minecraft-typed adapter a loader entrypoint registers into `HookRegistry`; `JigsawPlacementMixin`
+now actually replaces the start position for a `Shift` decision (`@ModifyVariable`, not `@Inject`
+-- GV-5 modeled `Shift` but never enacted it). `docs/baseline/grounded-26.2-fabric-10-seeds-site-only.json`
+is this section's raw data, same ten seeds, `site.enabled: true`.
+
+### Before / after
+
+| seed | structure | vanilla spread / water | site-on spread / water | pieces (v / site-on) | changed? |
+|---|---|---|---|---|---|
+| 1 | `village_plains` | 8.0 / 16.4% | 8.0 / 16.4% | 84 / 84 | no |
+| 2 | `village_plains` | 5.0 / 2.4% | 5.0 / 2.4% | 80 / 80 | no |
+| 3 | `village_plains` | 12.0 / 0.0% | 12.0 / 0.0% | 103 / 103 | no |
+| 4 | `village_snowy` | 11.0 / 46.0% | 11.0 / 46.0% | 105 / 105 | no |
+| 5 | `village_plains` | 20.0 / 7.2% | 20.0 / 7.2% | 230 / 230 | no |
+| 6 | `village_snowy` | 23.0 / 0.0% | 23.0 / 0.0% | 50 / 50 | no |
+| 7 | `village_plains` | 25.0 / 0.9% | 25.0 / 0.9% | 141 / 141 | no |
+| 8 | `village_taiga` | 7.0 / 1.5% | 7.0 / 1.5% | 114 / 114 | no |
+| 9 | `village_plains` | 26.0 / 53.4% | 26.0 / 53.4% | 151 / 151 | no |
+| 10 | `village_snowy` | 6.7 / 0.0% | 6.7 / 0.0% | 113 / 113 | no |
+
+**Zero of the ten reported villages changed at all**, to the exact decimal. Read plainly, before
+digging into why: **this before/after table is not evidence SITE is inert.** `HookDebug`
+(`-Dgrounded_villages.debug=true`, on by default for the seed-sweep harness as of this ticket)
+logs every `VillageStartHook` decision; summed across all ten seeds' own server logs, `SiteSearch`
+fired **269 times** -- **13 Keep, 25 Shift, 231 Vanilla-fallback** (`site_decisions` in the
+committed JSON). SITE is doing real, measurable work; the table above just isn't the row that
+shows it. Why: `SeedSweepRunner` (GV-10) reports the **single nearest** village to spawn per seed
+via `ServerLevel.findNearestMapStructure`, which forces `STRUCTURE_STARTS` generation -- and
+therefore this hook -- for **every** structure-set cell it scans on the way to the nearest one
+(the 269 evaluations above, up to 73 for one seed), not only the one it eventually returns. For
+all ten of these specific seeds, the one candidate that happened to end up "nearest" was always
+one whose own decision was `Keep` (already qualified) or `Vanilla` (search exhausted) -- never one
+of the 25 `Shift`s, which happened on other, non-nearest cells the same broad search touched. This
+is a real limitation of a harness built to measure one village per seed (`docs/spec/operations/testing.md`
+"Verification for the first ticket" named the harness itself as the weakest-evidenced part of this
+spec), not proof of no effect -- the debug-log tally is the honest measure of what SITE actually
+did across these seeds; the before/after table is an artifact of which single candidate the
+harness happens to land on. Flagged for Kevin: a future ticket's harness improvement (report every
+village a sweep's own search touches, not only the nearest) would make this table meaningful
+again; out of this ticket's own scope to build.
+
+### Keep / Shift / Vanilla counts (`site_decisions`, all 10 seeds combined)
+
+| Outcome | Count | Share |
+|---|---|---|
+| Keep | 13 | 4.8% |
+| Shift | 25 | 9.3% |
+| Vanilla (search exhausted) | 231 | 85.9% |
+| **Total evaluations** | **269** | |
+
+Of the 256 evaluations that needed a search at all (269 minus the 13 immediate `Keep`s), only 25
+(9.8%) found a qualifying alternative -- most candidates that fail `site.max_height_spread`/
+`max_water_fraction` stay failing everywhere the bounded search can reach. Per seed (first attempt,
+`search_step: 16`, `search_attempts: 8`, proposed defaults unchanged): seed 1 had 50 evaluations
+(5 `Shift`), seed 3 had 27 (10 `Shift`, 5 `Keep`), seeds 4/5/9 (the highest-water seeds) had 0
+`Shift` out of 8/8/24 -- every search on those three exhausted outright. This matches `site.md` §2
+"Unwanted"'s own accepted case: "terrain so uniformly bad ... that almost every village falls back
+to vanilla behaviour ... not a bug in this mod" -- seeds 4 and 9 in particular (46%/53% water) are
+large-water-feature seeds no bounded, in-cell search is likely to escape.
+
+### Search-bound tuning (`site.search_step`/`site.search_attempts`, GV-6 -- for Kevin's confirmation)
+
+Ticket instruction: tune `search_radius`/`search_step`/`search_attempts` only (never the
+thresholds) to raise the Shift share; write the measured trade-off here rather than deciding it
+silently. **Changed**: `site.search_step` `16` &rarr; `48`, `site.search_attempts` `8` &rarr; `4`
+(`site.search_radius` unchanged at `48`). Reasoning: with `step == radius`, every offset
+`SiteSearch#spiralOffsets` produces sits at the full `48`-block bound in one ring -- geometrically
+only the 4 cardinal directions fit (`hypot(1,1) * 48 = 67.9 > 48`, the two diagonals per ring are
+excluded), so this is **strictly cheaper** than the original `16`-block-step default (4 evaluated
+offsets instead of up to 8) while reaching **3x farther** (48 vs. 16 blocks) at the same, already
+cell-safe distance `SiteSearch`'s own javadoc establishes. Re-running the identical 10-seed sweep
+after this change: Shift count rose from **15 to 25** (of the same 256 non-`Keep` evaluations,
+5.9% &rarr; 9.8%), and the worst single-seed runtime fell from **59.9s to 33.7s** (seed 6, 73
+evaluations both times) -- an improvement on both the quality axis the ticket asked to tune and
+the performance axis this ticket also had to protect (below). **Not** a majority-Shift outcome --
+the ticket's own hoped-for target -- because the seeds still driving `Vanilla` hardest (4, 5, 6, 7,
+9) are dominated by features (large water bodies, wide elevation swings) that plausibly exceed
+what any single-cell-bounded search can reach at all, an accepted case per `site.md` §2 above, not
+a sign the tuning is wrong. **This is Kevin's to confirm**, same as the thresholds themselves.
+
+### A real performance finding: the column cap, not just the search bounds
+
+Tuning `SiteScorer.MAX_SAMPLE_COLUMNS` (an internal implementation cap, not a config key --
+`contracts/public-surface.md`) turned out to matter as much as the search bounds for this specific
+harness to even finish. `SeedSweepRunner`'s `findNearestMapStructure` call forces `addPieces` --
+and so a full `SiteSearch.evaluateStart` (`1 + search_attempts` `SiteScorer.score` calls) -- for
+every structure-set cell it scans before settling on "nearest", not just one: seed 1 needed 50,
+seed 6 needed 73. A first, naive cap of `400` columns per site left seed 4 at 56.8s of extra cost
+(barely inside the dedicated server's own 60s `max-tick-time` watchdog); at `200` seed 4 was still
+56.8s (8 candidate cells, each paying the full cost); at `64` seed 4 dropped to ~11.5s -- but seed
+1's own harness run then hit **over 40 candidate cells inside a single blocking call** and crashed
+the watchdog outright (`A single server tick took 60.01 seconds`). Shipped at `25` (a 5x5 grid,
+`SiteScorer`'s own javadoc has the full account): seed 1's worst run (50 cells) finished in 42.4s,
+seed 6's worst (73 cells) in 33.7-59.9s across the two search-bound configurations measured above
+-- real margin, but not a large one. **Flagged, not built** (out of this ticket's scope): the
+actual fix for the underlying multiplier is a fail-fast scorer (bail once either threshold is
+already unrecoverably blown, rather than always sampling the full grid), not a smaller cap --
+worth a follow-up ticket if a future harness or a genuinely unlucky real seed needs more margin
+than 25 columns leaves. Separately worth noting for anyone reading these numbers against real
+gameplay: this cost multiplies specifically because the harness's own `findNearestMapStructure`
+call forces many structure-set cells to generate **synchronously, in one blocking call** -- real
+gameplay loads chunks incrementally as a player explores, so a single chunk's own `addPieces` call
+(a few hundred ms to ~1.5s extra, this ticket's own measurements) is imperceptible; the watchdog
+risk this section describes is a property of this specific stress-test harness, not of normal play.
+
+### Sampling cost per site
+
+`SiteScorer.score` samples a `SAMPLE_STEP`-8-block grid, capped at `MAX_SAMPLE_COLUMNS = 25`
+columns (coarsening the step above roughly a 40-block radius to stay under the cap -- see
+`SiteScorer`'s own javadoc for the exact formula), two `TerrainSampler.getBaseHeight` calls per
+column (`OCEAN_FLOOR_WG` + `WORLD_SURFACE_WG` -- the cheaper of the two water-fraction methods
+`site.md` §3 allows, chosen over a `getBaseColumn` block-state read because `getBaseHeight` walks
+a noise column top-down with an early-exit stop predicate while `getBaseColumn` materialises the
+whole column with none; see `SiteScorer`'s javadoc for the full reasoning). `SiteSearch.evaluateStart`
+scores up to `1 + search_attempts` sites per candidate village start (now `1 + 4 = 5`, tuned this
+ticket): up to `5 x 25 x 2 = 250` `getBaseHeight` calls per candidate. Measured live during this
+ticket's harness runs, at roughly `1.25ms`/query (cold JVM, no JIT warm-up), that is ~560ms-1.4s
+per candidate cell depending on the search-bound configuration in effect at the time (see above).
+
+### Test counts (verbatim)
+
+- `SiteScorerTest`: 8/8 passed (flat/cliff/lake/slope synthetic height fields, the column-cap
+  coarsening, the negative-radius guard).
+- `SiteSearchTest`: 13/13 passed (Keep/Shift/Vanilla decisions, the deterministic spiral order and
+  its tie-break, the `SITE-REQ-005` disabled-skip, and `SITE-REQ-006`'s own "never re-evaluates the
+  origin" property for the future move-retry entry point).
+- Existing `config`/`hook` suites: unchanged, still green (`ConfigCodecTest`'s serialized-defaults
+  test updated for the new `search_step`/`search_attempts` values).
+- `chiseledCheck`/`chiseledBuild`: green on all six nodes (`just check`'s own report has the
+  full run).
+
 ## GV-8: tier rolling
 
 `docs/baseline/grounded-26.2-fabric-10-seeds-tiers-only.json` is the same sweep, same 10 seeds,

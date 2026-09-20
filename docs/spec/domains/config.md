@@ -40,8 +40,8 @@ real world yet.** The mechanism each key governs is decided; the number is not.
 | `site.max_height_spread` | integer (blocks) | `SITE` | Site-level height-spread threshold: the 90th-minus-10th-percentile spread of sampled ground heights (`OCEAN_FLOOR_WG`) across the candidate radius. | `12` |
 | `site.max_water_fraction` | float (0–1) | `SITE` | Site-level water-fraction threshold: the share of sampled columns that are water. | `0.05` |
 | `site.search_radius` | integer (blocks) | `SITE` | Bound on how far the alternate-site search may look from the vanilla start, staying inside the start chunk's own placement cell. | `48` |
-| `site.search_step` | integer (blocks) | `SITE` | Spacing between candidate offsets the search samples. | `16` |
-| `site.search_attempts` | integer | `SITE` | Bound on how many alternate candidate offsets the search may sample before giving up. | `8` |
+| `site.search_step` | integer (blocks) | `SITE` | Spacing between candidate offsets the search samples. | `48` (tuned, GV-6 — was `16`) |
+| `site.search_attempts` | integer | `SITE` | Bound on how many alternate candidate offsets the search may sample before giving up. | `4` (tuned, GV-6 — was `8`) |
 | `piece.enabled` | boolean | `PIECE` | Whether per-piece rejection runs at all. | `true` |
 | `piece.max_height_deviation` | integer (blocks) | `PIECE` | Per-piece tolerance from the village's start height. | `6` |
 | `tier.enabled` | boolean | `TIER` | Whether tier rolling runs at all; **where** `false`, every village rolls `village` (vanilla-like), matching pre-mod behaviour for size. | `true` |
@@ -51,7 +51,7 @@ real world yet.** The mechanism each key governs is decided; the number is not.
 | `tier.hamlet_minimum_pieces` | integer | `TIER` | Non-street piece floor a shrinking village must clear to stay a `hamlet` (`decisions/DEC-010-shrink-move-vanilla.md`). | `4` |
 | `tier.performance_cap` | integer | `TIER` | Absolute ceiling on generated piece count per village, regardless of tier. | `3×` vanilla's own piece count |
 
-### Default JSON (proposed, tune at the harness sweep)
+### Default JSON (thresholds still proposed; search_step/search_attempts tuned at GV-6's harness sweep)
 
 ```json
 {
@@ -62,8 +62,8 @@ real world yet.** The mechanism each key governs is decided; the number is not.
     "max_height_spread": 12,
     "max_water_fraction": 0.05,
     "search_radius": 48,
-    "search_step": 16,
-    "search_attempts": 8
+    "search_step": 48,
+    "search_attempts": 4
   },
   "piece": {
     "enabled": true,
@@ -127,7 +127,7 @@ None. The schema table above is the complete enumeration; there is no state mach
 
 | Question | Blocks | Decided by |
 |---|---|---|
-| Whether every §3 default holds up once measured by the headless harness sweep | Every `REQ` above that reads a default | **Proposed by Claude, 2026-09-20** — Kevin to confirm at the first ticket; config-overridable regardless of outcome |
+| Whether every §3 default holds up once measured by the headless harness sweep | Every `REQ` above that reads a default | **Proposed by Claude, 2026-09-20; `site.search_step`/`site.search_attempts` re-tuned by Claude, 2026-09-20 (GV-6), from the same 10-seed sweep — `docs/baseline/README.md`'s before/after table and trade-off writeup is the record.** Every other key (including `site.max_height_spread`/`max_water_fraction`, left at the original proposal per GV-6's own ticket scope) remains Kevin's to confirm; config-overridable regardless of outcome |
 | Whether a live-reload command or a config-screen-mod integration (Cloth Config, etc.) should ship later | `CONFIG-REQ-005` | deferred, not cut — a later ticket, same restraint `villager_voices` shows for its own config surface |
 
 ~~The specific reasoning for "no config library" across all three loaders~~ — resolved:

@@ -56,8 +56,8 @@ heights at `OCEAN_FLOOR_WG` (true ground, not water-topped) across the candidate
 | `site.max_height_spread` | 90th-minus-10th-percentile spread of sampled ground heights (`OCEAN_FLOOR_WG`) a candidate must be within to qualify | `12` blocks |
 | `site.max_water_fraction` | Share of sampled columns that may be water before a candidate is rejected | `0.05` (5%) |
 | `site.search_radius` | How far from the vanilla start the bounded search may look, staying inside the start chunk's own placement cell | `48` blocks |
-| `site.search_step` | Spacing between candidate offsets the search samples | `16` blocks |
-| `site.search_attempts` | How many alternate candidate offsets the search may sample before giving up | `8` |
+| `site.search_step` | Spacing between candidate offsets the search samples | `48` blocks (tuned, GV-6 — was `16`; step == radius puts every offset at the full safe bound, in the 4 cardinal directions only, `SITE-FAIL-002`'s geometry) |
+| `site.search_attempts` | How many alternate candidate offsets the search may sample before giving up | `4` (tuned, GV-6 — was `8`; matches what `search_step == search_radius` actually makes reachable) |
 
 ### Actor per step
 
@@ -99,5 +99,5 @@ fallback) that the transition table above is complete on its own; a human reader
 
 | Question | Blocks | Decided by |
 |---|---|---|
-| Whether §3's proposed defaults (`12` blocks / `5%` / `48`-block radius in `16`-block steps / `8` attempts) hold up once measured by the headless harness sweep | `SITE-REQ-001`–`003` | **Proposed by Claude, 2026-09-20** — Kevin to confirm at the first ticket, config-overridable regardless of outcome |
+| Whether §3's proposed defaults hold up once measured by the headless harness sweep | `SITE-REQ-001`–`003` | **Proposed by Claude, 2026-09-20; `search_step`/`search_attempts` re-tuned by Claude, 2026-09-20 (GV-6) to `48`-block radius in `48`-block steps / `4` attempts (4 cardinal offsets at the full safe distance), from the same 10-seed sweep — `docs/baseline/README.md` has the before/after table and the measured trade-off.** `max_height_spread`/`max_water_fraction` (`12` blocks / `5%`) left as originally proposed, per GV-6's own ticket scope — still Kevin's to confirm at this ticket, config-overridable regardless of outcome |
 | Whether to read "Improved Village Placement"'s own source for design ideas (`decisions/DEC-009-prior-art.md` already rules out code reuse; this is only about reading, not reusing) | `SITE-REQ-001` | first ticket, low priority |

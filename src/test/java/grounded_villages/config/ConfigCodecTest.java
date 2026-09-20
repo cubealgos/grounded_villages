@@ -45,8 +45,8 @@ final class ConfigCodecTest {
                     "max_height_spread": 12,
                     "max_water_fraction": 0.05,
                     "search_radius": 48,
-                    "search_step": 16,
-                    "search_attempts": 8
+                    "search_step": 48,
+                    "search_attempts": 4
                   },
                   "piece": {
                     "enabled": true,
