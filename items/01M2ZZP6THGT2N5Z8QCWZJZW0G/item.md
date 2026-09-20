@@ -28,15 +28,15 @@ resolution and exact search algorithm are internal (`contracts/public-surface.md
 
 ## Acceptance criteria
 
-- [ ] `SITE-REQ-001` through `SITE-REQ-006` implemented
-- [ ] unit tests: accept/reject given synthetic heightmap/water-fraction inputs, covering both the
+- [x] `SITE-REQ-001` through `SITE-REQ-006` implemented
+- [x] unit tests: accept/reject given synthetic heightmap/water-fraction inputs, covering both the
   height-spread and water-fraction thresholds independently
-- [ ] the bounded search is genuinely bounded — `SITE-FAIL-002`: an unreasonable
+- [x] the bounded search is genuinely bounded — `SITE-FAIL-002`: an unreasonable
   `search_radius`/`search_attempts` config value is clamped with a logged warning, never allowed to
   make generation unbounded
-- [ ] `site.enabled: false` skips site selection entirely and reproduces vanilla behaviour
+- [x] `site.enabled: false` skips site selection entirely and reproduces vanilla behaviour
   (`SITE-REQ-005`)
-- [ ] the proposed defaults (`max_height_spread: 12`, `max_water_fraction: 0.05`,
+- [x] the proposed defaults (`max_height_spread: 12`, `max_water_fraction: 0.05`,
   `search_radius: 48`, `search_step: 16`, `search_attempts: 8`) are confirmed or revised at this
   ticket, per `README.md` "Verifications" row 17's flag that every numeric default is
   Kevin's-to-confirm, not measured yet — **to confirm**
