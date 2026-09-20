@@ -25,17 +25,17 @@ Forge/NeoForge) — that line lives in each loader's own entrypoint, not in this
 
 ## Acceptance criteria
 
-- [ ] `CONFIG-REQ-001` through `CONFIG-REQ-005` implemented
-- [ ] `CONFIG-FAIL-001` (malformed JSON): whole-file fallback to defaults, logged warning, no crash
-- [ ] `CONFIG-FAIL-002` (one bad key): that key alone falls back or clamps, every other valid key
+- [x] `CONFIG-REQ-001` through `CONFIG-REQ-005` implemented
+- [x] `CONFIG-FAIL-001` (malformed JSON): whole-file fallback to defaults, logged warning, no crash
+- [x] `CONFIG-FAIL-002` (one bad key): that key alone falls back or clamps, every other valid key
   is kept
-- [ ] `CONFIG-FAIL-003` (unwritable config directory): runs on in-memory defaults for the session,
+- [x] `CONFIG-FAIL-003` (unwritable config directory): runs on in-memory defaults for the session,
   logs the path it could not write, does not crash startup
-- [ ] the shipped default JSON matches `domains/config.md` §3's proposed schema exactly, including
+- [x] the shipped default JSON matches `domains/config.md` §3's proposed schema exactly, including
   `schema_version: 1`
-- [ ] `ConfigModel` carries zero Minecraft or loader imports (checked by the shared-source purity
+- [x] `ConfigModel` carries zero Minecraft or loader imports (checked by the shared-source purity
   check that `ARCH-DEC-002` names, `TEST-REQ-002`'s deliberate-break proof lands with GV-11)
-- [ ] no live-reload command exists at 1.0 — a restart is required for a config edit to take effect
+- [x] no live-reload command exists at 1.0 — a restart is required for a config edit to take effect
   (`CONFIG-REQ-005`)
 
 ## Constraints and prior findings
