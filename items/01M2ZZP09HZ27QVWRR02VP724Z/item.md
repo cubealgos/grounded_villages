@@ -24,14 +24,14 @@ literally rather than a single pass/fail.
 
 ## Acceptance criteria
 
-- [ ] doctor checks Java 17, 21, and 25 are each discoverable (via `JAVA_HOME`-style env vars or
+- [x] doctor checks Java 17, 21, and 25 are each discoverable (via `JAVA_HOME`-style env vars or
   PATH), reporting per Minecraft generation, not collapsed into one floor
-- [ ] doctor fails naming the specific row when a toolchain is absent or below its floor
+- [x] doctor fails naming the specific row when a toolchain is absent or below its floor
   (`PLATFORM-REQ-001`)
-- [ ] doctor checks the Gradle wrapper pin is >= `9.5.1`
-- [ ] doctor checks `docs/spec/` against the vault copy (unchanged from the sibling shape)
-- [ ] doctor checks `docs/map.md`/`docs/map/` staleness via `tools/map.py --check`
-- [ ] `kontor doctor` (the repo-conformance half) and `tools/doctor.py` (the toolchain half) both
+- [x] doctor checks the Gradle wrapper pin is >= `9.5.1`
+- [x] doctor checks `docs/spec/` against the vault copy (unchanged from the sibling shape)
+- [x] doctor checks `docs/map.md`/`docs/map/` staleness via `tools/map.py --check`
+- [x] `kontor doctor` (the repo-conformance half) and `tools/doctor.py` (the toolchain half) both
   clean, matching `just doctor: doctor-repo doctor-toolchain`'s split
 
 ## Constraints and prior findings
