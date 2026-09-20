@@ -27,17 +27,17 @@ shape) — no precompiled `common` subproject (`ARCH-DEC-002`).
 
 ## Acceptance criteria
 
-- [ ] `settings.gradle.kts` wires Stonecutter with the six `match()` calls from
+- [x] `settings.gradle.kts` wires Stonecutter with the six `match()` calls from
   `decisions/DEC-004-versions-and-toolchain.md`
-- [ ] each `versions/<id>-<loader>` node has its own `build.<loader>.gradle.kts` supplying the
+- [x] each `versions/<id>-<loader>` node has its own `build.<loader>.gradle.kts` supplying the
   loader entrypoint stub, mixin-config JSON stub, and that loader's mod-metadata file
-- [ ] root `stonecutter.gradle.kts` registers `chiseledBuild` and `chiseledCheck` explicitly
-- [ ] `./gradlew chiseledBuild` produces six real, distinct, empty jars
-- [ ] each node's Java toolchain matches `contracts/platform-matrix.md`'s per-row table
+- [x] root `stonecutter.gradle.kts` registers `chiseledBuild` and `chiseledCheck` explicitly
+- [x] `./gradlew chiseledBuild` produces six real, distinct, empty jars
+- [x] each node's Java toolchain matches `contracts/platform-matrix.md`'s per-row table
   (1.20.1 -> Java 17; 1.21.1 both loaders -> Java 21; 26.2 both loaders -> Java 25)
-- [ ] Mojang mappings confirmed on every node (`loom.officialMojangMappings()` on Fabric; MDG/
+- [x] Mojang mappings confirmed on every node (`loom.officialMojangMappings()` on Fabric; MDG/
   `legacyforge` default elsewhere)
-- [ ] no rejection/tier/config logic exists yet — this ticket is skeleton only, `PIECE`/`SITE`/
+- [x] no rejection/tier/config logic exists yet — this ticket is skeleton only, `PIECE`/`SITE`/
   `TIER`/`CONFIG` domains land in their own tickets
 
 ## Constraints and prior findings
