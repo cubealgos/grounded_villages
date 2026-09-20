@@ -67,6 +67,13 @@ server node:
 spec-sync:
     rsync -a --delete "{{vault_spec}}/" docs/spec/
 
+# Render the Modrinth icon (GV-23): vanilla's own flat village bell item sprite, on the cubealgos
+# navy badge, the way create_villager_customers composes the vanilla emerald. Reads it from a
+# local Minecraft client jar found by globbing the Gradle cache; pass --jar PATH, or --pick to
+# write one of the other rendered candidates instead, via tools/icon.py directly.
+icon:
+    python3 tools/icon.py
+
 # Regenerate docs/map.md and docs/map/ from the source.
 map:
     python3 tools/map.py
