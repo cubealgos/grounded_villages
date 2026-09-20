@@ -9,10 +9,12 @@ signature page before calling into a package you did not write.
 
 | project | source roots |
 |---|---|
-| `root` | `src/fabric/java`, `src/forge/java`, `src/neoforge/java` |
+| `root` | `src/fabric/java`, `src/forge/java`, `src/main/java`, `src/neoforge/java`, `src/test/java` |
 
 | package | project | types | what |
 |---|---|---|---|
+| `grounded_villages.config` | root | ConfigBounds, ConfigCodec, ConfigDefaults, ConfigHolder, ConfigIo, ConfigJson, ConfigMigrations, ConfigModel | The one config file this mod writes (`docs/spec/contracts/data-contract.md` DATA-REQ-002): a pure Java model (grounded_villages.config.ConfigModel) and its parser/serialiser (grounded_villages.config.ConfigCodec), built on a small hand-rolled, dependency-free JSON reader (grounded_villages.config.ConfigJson) rather than a config library (`decisions/DEC-008-config-file.md`). |
+| `grounded_villages.config` | root (test) | ConfigCodecTest, ConfigIoTest, ConfigMigrationsTest, ConfigModelTest |  |
 | `grounded_villages.fabric` | root (fabric) | GroundedVillagesFabric |  |
 | `grounded_villages.forge` | root (forge) | GroundedVillagesForge |  |
 | `grounded_villages.neoforge` | root (neoforge) | GroundedVillagesNeoForge |  |
