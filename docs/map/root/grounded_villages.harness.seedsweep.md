@@ -24,6 +24,6 @@ Hand-rolled unit tests for SeedSweepStats on synthetic samples (docs/spec/operat
 - `void main(String[]args)`
 
 ### `class VillageSweepResult` — `src/seedsweep/java/grounded_villages/harness/VillageSweepResult.java`
-One village's seed-sweep measurement (GV-10 acceptance criteria): start position, piece count, height spread and water fraction under its footprint, and the tier if the mod has set one (docs/spec/domains/tiers.md -- not implemented as of this ticket, so #tier is always null today; GV-8 fills it in).
+One village's seed-sweep measurement (GV-10 acceptance criteria): start position, piece count, height spread and water fraction under its footprint, and the tier if the mod has set one (docs/spec/domains/tiers.md -- #tier is null when tier.enabled is false, otherwise the rolled tier's lower-case name, e.g.
 - `VillageSweepResult(long seed, String structureId, int startX, int startY, int startZ, int pieceCount, double heightSpread, double waterFraction, int sampleCount, String tier, long runtimeMillis)`
 

@@ -49,6 +49,12 @@ gametest:
 sweep count="10":
     ./gradlew :26.2-fabric:seedSweep -Pcount={{count}}
 
+# GV-8: proves a fixed seed rolls a fixed tier (runs the dedicated server twice, diffs the
+# result). 26.2-fabric only, not wired into `check` (see build.fabric.gradle.kts's own comment on
+# `tierGameTest` for why).
+tiergametest seed="":
+    ./gradlew :26.2-fabric:tierGameTest {{ if seed == "" { "" } else { "-Pseed=" + seed } }}
+
 # One version node's client, e.g. `just client 1.21.1-fabric`.
 client node:
     ./gradlew :{{node}}:runClient
