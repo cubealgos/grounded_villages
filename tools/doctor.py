@@ -16,6 +16,11 @@ Fabric Loader / Fabric Loom) still match the pins `contracts/platform-matrix.md`
 reporting drift as a failure naming the row -- the same "fails naming the row" contract as the Java
 floors, extended to every pinned coordinate, not only the JDK majors.
 
+Also checks `docs/modrinth/targets.json` (GV-19: the Modrinth publish tool's --targets file, one
+entry per jar) against `settings.gradle.kts`'s own Stonecutter `match()` nodes -- read from the
+build script, never hardcoded to a count, so a node a later ticket adds (GV-17: six more nodes)
+cannot be silently forgotten in the publish targets.
+
 Read-only: reports, changes nothing. Exit 0 when every check passes, 5 when a toolchain or
 coordinate is absent or below/unequal to its pin, 6 when docs/spec/ differs from the vault copy
 (and nothing else failed). Each failure names the floor/pin and what was found, and looks where the
@@ -24,6 +29,7 @@ tool actually lives rather than only on PATH.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -174,6 +180,69 @@ def check_stonecutter_version(root: Path) -> tuple[bool, str]:
     return ok, f"stonecutter: {found} pinned in settings.gradle.kts; matrix pins {STONECUTTER_VERSION}"
 
 
+def parse_stonecutter_nodes(root: Path) -> list[str]:
+    """Every Stonecutter version node settings.gradle.kts's own `match(project, *loaders)` helper
+    declares, as `"<project>-<loader>"` -- Stonecutter's own node-naming shape (`version("$project-
+    $loader", ...)` in the helper itself). Read from the build script, not hardcoded to a count, so
+    a node a later ticket adds (GV-17) is picked up here without editing this file."""
+    settings = root / "settings.gradle.kts"
+    if not settings.exists():
+        return []
+    nodes = []
+    for call in re.finditer(r"\bmatch\(\s*([^)]*)\)", settings.read_text()):
+        # Drop a `version = "..."` keyword arg first -- it renames the node's *version* label,
+        # not its project/loader identity, and match()'s own node name is always "$project-$loader"
+        # regardless of it.
+        args_text = re.sub(r'\bversion\s*=\s*"[^"]*"', "", call.group(1))
+        strings = re.findall(r'"([^"]*)"', args_text)
+        if len(strings) < 2:
+            continue
+        project, loaders = strings[0], strings[1:]
+        nodes.extend(f"{project}-{loader}" for loader in loaders)
+    return nodes
+
+
+def check_targets(root: Path) -> tuple[bool, str]:
+    """docs/modrinth/targets.json (GV-19: the Modrinth publish tool's --targets file) must list
+    exactly one target per Stonecutter version node -- read from settings.gradle.kts itself, never
+    a hardcoded count, so a node GV-17 adds cannot be silently left out of a release."""
+    settings_nodes = parse_stonecutter_nodes(root)
+    if not settings_nodes:
+        return False, "targets: no Stonecutter match() nodes found in settings.gradle.kts"
+
+    targets_path = root / "docs" / "modrinth" / "targets.json"
+    if not targets_path.exists():
+        return False, f"targets: {targets_path} missing"
+    try:
+        doc = json.loads(targets_path.read_text())
+    except json.JSONDecodeError as exc:
+        return False, f"targets: {targets_path} did not parse ({exc})"
+    targets = doc if isinstance(doc, list) else doc.get("targets") if isinstance(doc, dict) else None
+    if not isinstance(targets, list):
+        return False, f"targets: {targets_path} has no targets list"
+
+    target_nodes = []
+    for i, t in enumerate(targets, start=1):
+        if not isinstance(t, dict) or "node" not in t:
+            return False, f"targets: entry {i} in {targets_path} has no 'node' field to check against settings.gradle.kts"
+        target_nodes.append(t["node"])
+
+    settings_set, target_set = set(settings_nodes), set(target_nodes)
+    missing = sorted(settings_set - target_set)
+    extra = sorted(target_set - settings_set)
+    dup = sorted({n for n in target_nodes if target_nodes.count(n) > 1})
+    if missing or extra or dup:
+        parts = []
+        if missing:
+            parts.append(f"missing from targets.json: {missing}")
+        if extra:
+            parts.append(f"in targets.json but not a Stonecutter node: {extra}")
+        if dup:
+            parts.append(f"duplicated in targets.json: {dup}")
+        return False, "targets: " + "; ".join(parts)
+    return True, f"targets: docs/modrinth/targets.json covers all {len(settings_nodes)} Stonecutter node(s)"
+
+
 def dig(doc: dict, path: tuple[str, ...]):
     node = doc
     for key in path:
@@ -266,6 +335,7 @@ def main(argv: list[str] | None = None) -> int:
         check_map(root),
         check_wrapper(root),
         check_stonecutter_version(root),
+        check_targets(root),
     ]
     results += check_coordinates(root)
 

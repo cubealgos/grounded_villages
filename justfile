@@ -4,6 +4,7 @@
 
 main_checkout := parent_directory(`git rev-parse --path-format=absolute --git-common-dir`)
 vault_spec := env("GV_VAULT_SPEC", main_checkout / ".." / "heimathafen" / "vault" / "projects" / "grounded_villages" / "spec")
+modrinth_publish := env("GV_MODRINTH_PUBLISH", main_checkout / ".." / "heimathafen" / "standards" / "marketing" / "modrinth" / "modrinth-publish.py")
 
 default:
     @just --list
@@ -27,8 +28,21 @@ build:
 # (GV-2 ships zero mixin/rejection code to test; the harness lands with docs/spec/operations
 # /testing.md "Verification for the first ticket"), and Gradle's `-x` fails hard on a task path
 # that resolves on no project at all. Restore the exclusion once that task exists.
-lint:
+lint: purity-check
     ./gradlew chiseledCheck -x test --continue
+
+# GV-11, TEST-REQ-002/04-architecture.md ARCH-DEC-002: the shared-source purity check itself --
+# `grounded_villages.piece`/`.site`/`.tier`/`.config` carry no Minecraft/Fabric/NeoForge/Forge
+# import. Cheap (plain text scan, no Gradle/JVM boot), so it runs as its own `lint` step rather
+# than only living inside the proof below.
+purity-check:
+    python3 tools/purity_check.py
+
+# TEST-REQ-002: the one-time deliberate-break proof that purity-check above is not a no-op.
+# Mutates and restores a real source file mid-run (see tools/purity_proof.py's own docstring) --
+# deliberately not part of `just lint`/`just check`.
+purity-proof:
+    python3 tools/purity_proof.py
 
 # Unit tests across every node, then the repository tools as commands.
 test: test-java test-tools
@@ -39,9 +53,12 @@ test-java:
 test-tools:
     python3 -m unittest discover -s tools -p 'test_*.py'
 
-# Server-side game tests on a headless dedicated server, per loader.
+# GV-11: per-loader game tests (fabric-gametest-api-v1's runGameTest, NeoForge's
+# runGameTestServer) -- 26.2-fabric and 1.21.1-neoforge, see stonecutter.gradle.kts's own
+# chiseledGameTest comment for the node scope and build.neoforge.gradle.kts for why NeoForge runs
+# on 1.21.1, not 26.2.
 gametest:
-    ./gradlew chiseledCheck --continue
+    ./gradlew chiseledGameTest --continue
 
 # GV-10: sweep N seeds for the first village near spawn (height spread, water fraction, piece
 # count), 26.2-fabric only. Fixed, checked-in seed list (docs/baseline/seeds.txt, TEST-REQ-003);
@@ -109,3 +126,10 @@ release-notes version:
 # publish loop; this recipe stays the build half.
 release:
     ./gradlew chiseledBuild
+
+# GV-19: the six-invocation Modrinth publish loop's own dry run, one confirmation, nothing sent
+# (modrinth-publish.py's --targets mode, `standards/marketing/modrinth-publishing.md`). Prints all
+# six payloads from docs/modrinth/targets.json against docs/modrinth/body.md's shared fields; set
+# GV_MODRINTH_PUBLISH to point at a different heimathafen checkout than the sibling default.
+publish-dry:
+    python3 {{modrinth_publish}} version --repo . --targets docs/modrinth/targets.json --dry-run

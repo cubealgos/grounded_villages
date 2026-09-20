@@ -52,3 +52,24 @@ tasks.register("chiseledCheck") {
     description = "Runs `check` on every version node."
     dependsOn(stonecutter.tasks.named("check"))
 }
+
+// GV-11: per-loader game tests, wired into this aggregate for the two nodes ticket GV-11 itself
+// is scoped to (26.2-fabric, 1.21.1-neoforge -- see build.neoforge.gradle.kts's own comment for
+// why NeoForge runs on 1.21.1, not 26.2). Fabric is 26.2-fabric only, not every fabric node:
+// confirmed live (`./gradlew :1.21.1-fabric:compileJava`) that the resolved
+// `fabric-gametest-api-v1` module at 1.21.1's own `deps.fabric_api` pin has no
+// `net.fabricmc.fabric.api.gametest.v1.GameTest` class at all (a newer addition, present only at
+// 26.2's own module version) -- see build.fabric.gradle.kts's own comment on its node-conditional
+// block for the full finding. Explicit task paths, not `stonecutter.tasks.named(...)`: that helper
+// aggregates one task name across EVERY registered node uniformly, and no single game-test task
+// name exists on every node here (the two Forge legs and every non-26.2 fabric node have none at
+// all, GV-11's own scope).
+tasks.register("chiseledGameTest") {
+    group = "verification"
+    description = "Runs GV-11's per-loader game tests on this ticket's two primary nodes " +
+        "(26.2-fabric's runGameTest, 1.21.1-neoforge's runGameTestServer)."
+    dependsOn(
+        ":26.2-fabric:runGameTest",
+        ":1.21.1-neoforge:runGameTestServer"
+    )
+}

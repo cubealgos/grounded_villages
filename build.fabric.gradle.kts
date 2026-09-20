@@ -374,3 +374,50 @@ if (sc.current.project == "26.2-fabric" || sc.current.project == "1.21.8-fabric"
         }
     }
 }
+
+// GV-11: per-loader game tests -- 26.2-fabric only, NOT every fabric node, and NOT folded into
+// the seed-sweep harness's own node-conditional block above (GV-17: that block also covers
+// 1.21.8-fabric now, and the gametest scenario bodies are not version-safe there -- confirmed
+// live, `:1.21.8-fabric:compileJava` failing on `PieceGateScenarios.java`'s own
+// `GameTestHelper.fail`/assert calls, which take `Component` on 26.2 and `String` on 1.21.x; a
+// separate block is the honest fix, not a version-conditional inside the scenario source itself,
+// since GV-11 already scoped this node-by-node deliberately, the same way this comment always
+// said). Confirmed live (`./gradlew :1.21.1-fabric:compileJava`): the resolved
+// fabric-gametest-api-v1 module at 1.21.1's own deps.fabric_api pin (0.116.17+1.21.1) has no
+// `net.fabricmc.fabric.api.gametest.v1.GameTest` class at all -- that annotation is a newer
+// addition, present only at 26.2's own module version (4.0.22+4a7fa0819e, confirmed present and
+// confirmed compiling live on this node). 1.20.1 fails the same way, one version further back.
+// `grounded_villages.gametest` (the shared scenario bodies) also needs `LiquidSettings`, itself
+// absent before 1.21 -- another reason this whole tree stays node-gated rather than shared
+// unconditionally like `src/fabric/java` above.
+if (sc.current.project == "26.2-fabric") {
+    dependencies {
+        modImplementation(fabricApi.module("fabric-gametest-api-v1", sc.properties["deps.fabric_api"]))
+    }
+    sourceSets.main {
+        java.srcDir(rootProject.file("src/gametest/java"))
+        java.srcDir(rootProject.file("src/fabricgametest/java"))
+    }
+    loom.runConfigs.register("gameTest") {
+        // GV-11: `-Dfabric-api.gametest=true` is the documented switch `fabric-gametest-api-v1`
+        // reads to run every discovered `@GameTest`-annotated method headlessly and exit non-zero
+        // on any failure, instead of booting an interactive dedicated server
+        // (`net.fabricmc.fabric.impl.gametest.GameTestSystemProperties`, confirmed present in the
+        // resolved module jar). Registered as its own Loom run config (task name `runGameTest`,
+        // Loom's own "run" + capitalised config name convention) rather than folded into the
+        // existing `server` config, so `just gametest`/CI can invoke it without touching the
+        // config a person's own `just server`/`just client` session already uses.
+        server()
+        name("Game Test")
+        source(sourceSets.main.get())
+        vmArg("-Dfabric-api.gametest=true")
+        // A dedicated directory, not the `runConfigs.all` default ("run", the same directory
+        // `just server`/`just client` and seedSweep's own runServer use) -- confirmed live:
+        // running this alongside :1.21.1-neoforge:runGameTestServer (itself defaulting to "run"
+        // too) under Gradle's own parallel execution (org.gradle.parallel=true,
+        // gradle.properties) crashed with a DirectoryLock$LockException, both trying to open the
+        // same save at once.
+        runDir("run-gametest-fabric")
+        vmArg("-Dfabric-api.gametest.report-file=${rootProject.file("build/gametest/fabric-report.xml")}")
+    }
+}
