@@ -3,7 +3,7 @@ schema_version: 1
 id: 01M2ZZM1V6VZBRST75SMH8BA6M
 key: M3
 title: "Wave 3: the 1.21.x points"
-status: backlog
+status: todo
 created_at: 2026-09-20T18:00:29Z
 ---
 
