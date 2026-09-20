@@ -9,10 +9,13 @@ signature page before calling into a package you did not write.
 
 | project | source roots |
 |---|---|
-| `root` | `src/fabric/java`, `src/forge/java`, `src/neoforge/java` |
+| `root` | `src/fabric/java`, `src/forge/java`, `src/main/java`, `src/neoforge/java` |
 
 | package | project | types | what |
 |---|---|---|---|
+| `grounded_villages.hook` | root | ChunkGeneratorTerrainSampler, GenerationContext, HookDebug, HookRegistry, PieceDecision, StartDecision, TerrainSampler, VillagePieceHook, VillageStartHook |  |
+| `grounded_villages.mixin.village` | root | JigsawPlacementMixin, JigsawStructureMixin, PlacerMixin |  |
+| `grounded_villages.mixinsupport` | root | VillageTagContext |  |
 | `grounded_villages.fabric` | root (fabric) | GroundedVillagesFabric |  |
 | `grounded_villages.forge` | root (forge) | GroundedVillagesForge |  |
 | `grounded_villages.neoforge` | root (neoforge) | GroundedVillagesNeoForge |  |

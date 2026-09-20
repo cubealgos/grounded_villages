@@ -2,7 +2,11 @@
   "required": true,
   "package": "grounded_villages.mixin",
   "compatibilityLevel": "${java}",
-  "mixins": [],
+  "mixins": [
+    "village.JigsawStructureMixin",
+    "village.JigsawPlacementMixin",
+    "village.PlacerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
