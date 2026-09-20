@@ -3,3 +3,16 @@
 
 # Every working branch lives here, not as a sibling directory.
 .worktrees/
+
+# Gradle and run directories
+.gradle/
+build/
+run/
+logs/
+.idea/
+*.iml
+__pycache__/
+dist/
+
+# macOS Finder droppings
+.DS_Store

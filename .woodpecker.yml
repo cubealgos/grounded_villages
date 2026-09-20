@@ -1,0 +1,29 @@
+# CI runs exactly what runs locally: `just check` on the JDKs the platform matrix names (17, 21,
+# 25 -- three Java majors at once, unlike a single-floor sibling, since this mod spans 1.20.1
+# through 26.2 in one repository). If it passes on a laptop and fails here, that difference is a
+# real finding rather than a configuration guess.
+#
+# GV-2 fills in the real Stonecutter build `just check` (via chiseledBuild/chiseledCheck) drives;
+# until then this pipeline fails at the `just check` step, which is the correct state for a
+# bootstrap-only repository. GV-3 tunes this file once the real build exists; each wave beyond
+# that adds jobs for its own new nodes only (contracts/platform-matrix.md "CI matrix"), never a
+# rebuild of an already-shipped combination's own job.
+#
+# Temurin 25 is pinned to the JDK major the platform matrix floors on for 26.2, the newest rung;
+# Gradle's own toolchain auto-provisioning (org.gradle.toolchains.foojay-resolver-convention) is
+# expected to fetch 17 and 21 for the older rungs, once GV-2 wires it in -- the alternative is all
+# three JDKs baked into the CI image, a call GV-3 makes once the real build exists to measure
+# against.
+
+when:
+  - event: [push, pull_request, manual]
+
+steps:
+  - name: check
+    image: eclipse-temurin:25-jdk
+    environment:
+      # Gradle's daemon has nothing to keep warm in a one-shot container.
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
+    commands:
+      - ./.ci/install-tools.sh
+      - just check
