@@ -25,13 +25,13 @@ exists.
 
 ## Acceptance criteria
 
-- [ ] `TEST-REQ-004` satisfied: a game test proves the hook coexists with vanilla and never mutates
+- [x] `TEST-REQ-004` satisfied: a game test proves the hook coexists with vanilla and never mutates
   a piece it accepts
-- [ ] at least one game test per Wave 1 loader family (Fabric, NeoForge) covering: water-footprint
+- [x] at least one game test per Wave 1 loader family (Fabric, NeoForge) covering: water-footprint
   rejection, dangling-connector absence, accept-path non-mutation
-- [ ] `TEST-REQ-002`: one deliberate-break proof exists for the shared-source purity check (a
+- [x] `TEST-REQ-002`: one deliberate-break proof exists for the shared-source purity check (a
   Minecraft import deliberately added to a pure-logic package fails the check)
-- [ ] these game tests are wired into GV-3's CI pipeline, not left as a local-only recipe
+- [x] these game tests are wired into GV-3's CI pipeline, not left as a local-only recipe
 
 ## Constraints and prior findings
 
