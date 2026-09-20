@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "grounded_villages.mixin",
+  "compatibilityLevel": "${java}",
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

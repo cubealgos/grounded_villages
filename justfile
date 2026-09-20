@@ -1,8 +1,6 @@
 # The task surface: the fleet's standard recipe names, pointing at the Stonecutter tasks
 # `multi-loader-multi-version-mods-2026.md` "Grounded Villages" names. GV-2 fills the actual
-# Stonecutter build in; until then, every recipe below that shells out to `./gradlew` fails with
-# "no such file" rather than silently succeeding — that is the correct state for a bootstrap-only
-# repository, not a bug in this justfile.
+# Stonecutter build in.
 
 main_checkout := parent_directory(`git rev-parse --path-format=absolute --git-common-dir`)
 vault_spec := env("GV_VAULT_SPEC", main_checkout / ".." / "heimathafen" / "vault" / "projects" / "grounded_villages" / "spec")
@@ -21,14 +19,18 @@ build:
     ./gradlew chiseledBuild
 
 # Static analysis and the project's own rules, without the tests.
+# `-x runGameTest` is dropped for now: no game-test task exists anywhere in the project yet
+# (GV-2 ships zero mixin/rejection code to test; the harness lands with docs/spec/operations
+# /testing.md "Verification for the first ticket"), and Gradle's `-x` fails hard on a task path
+# that resolves on no project at all. Restore the exclusion once that task exists.
 lint:
-    ./gradlew chiseledCheck -x test -x runGameTest
+    ./gradlew chiseledCheck -x test
 
 # Unit tests across every node, then the repository tools as commands.
 test: test-java test-tools
 
 test-java:
-    ./gradlew chiseledCheck -x runGameTest
+    ./gradlew chiseledCheck
 
 test-tools:
     python3 -m unittest discover -s tools -p 'test_*.py'

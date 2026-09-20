@@ -2,10 +2,11 @@ Grounded Villages is MIT-licensed (LICENSE).
 
 It runs on and is built against:
 - Fabric Loader and Fabric API (FabricMC), Apache-2.0.
-- NeoForge (NeoForged): licence to verify at the first ticket (GV-2), before the NeoForge nodes
-  land.
-- Minecraft Forge (the Forge project), 1.20.1 only: licence to verify at its own ticket (GV-15),
-  before the Forge leg lands.
+- NeoForge (NeoForged), LGPL-2.1 -- verified GV-2, 2026-09-20 (GitHub API `license` field on
+  `neoforged/NeoForge`), compile-time platform dependency only, never redistributed.
+- Minecraft Forge (the Forge project), 1.20.1 only, LGPL-2.1 -- verified GV-2, 2026-09-20
+  (`MinecraftForge/MinecraftForge` `LICENSE.txt` read directly), compile-time platform dependency
+  only, never redistributed.
 - Minecraft (Mojang), via Mojang's own official mappings on every node: this mod adds no block,
   item, or entity of its own; no Mojang asset (texture, model, or sound) is copied or redistributed.
 
