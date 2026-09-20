@@ -18,9 +18,9 @@ The Modrinth icon for Grounded Villages in the fleet's convention (`standards/ma
 
 ## Acceptance criteria
 
-- [ ] `tools/icon.py` renders the icon deterministically from the client jar's assets (no Mojang pixels committed except the rendered composite, which the siblings also commit as `icon.png`; note the convention in `NOTICE`).
-- [ ] `docs/modrinth/icon.png` 512×512, reads at 64 px; a sheet with the candidates for Kevin.
-- [ ] `modrinth-publish.py check --repo .` no longer flags the icon; `just check` green; merged through a Forgejo pull request into `development`.
+- [x] `tools/icon.py` renders the icon deterministically from the client jar's assets (no Mojang pixels committed except the rendered composite, which the siblings also commit as `icon.png`; note the convention in `NOTICE`).
+- [ ] `docs/modrinth/icon.png` 512×512, reads at 64 px; a sheet with the candidates for Kevin (flat sprite merged, Kevin's pick open).
+- [x] `modrinth-publish.py check --repo .` no longer flags the icon; `just check` green; merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
