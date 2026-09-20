@@ -3,6 +3,7 @@ repository tree in a temporary directory, environment variables standing in for 
 GRADLE_USER_HOME and GV_VAULT_SPEC, and a fake `java` on PATH -- never the real JDKs or vault this
 machine happens to have. One test per PLATFORM-REQ-001 failure mode: a missing JDK, a drifted
 dependency coordinate, and a stale spec copy, plus the all-green path."""
+import json
 import os
 import stat
 import subprocess
@@ -21,7 +22,35 @@ SETTINGS_GRADLE = textwrap.dedent('''
     plugins {
         id("dev.kikugie.stonecutter") version "0.9.8"
     }
+
+    stonecutter {
+        create(rootProject) {
+            fun match(project: String, vararg loaders: String, version: String = project) {
+                for (loader in loaders) version("$project-$loader", version).buildscript("build.$loader.gradle.kts")
+            }
+
+            match("1.20.1", "fabric", "forge")
+            match("1.21.1", "fabric", "neoforge")
+            match("26.2", "fabric", "neoforge")
+        }
+    }
 ''')
+
+# The six nodes SETTINGS_GRADLE's own match() calls above declare -- kept as one importable list
+# so a test that mutates SETTINGS_GRADLE's node set can build a matching (or deliberately
+# mismatched) targets.json from the same source instead of retyping the six strings.
+SETTINGS_GRADLE_NODES = [
+    "1.20.1-fabric", "1.20.1-forge", "1.21.1-fabric", "1.21.1-neoforge", "26.2-fabric", "26.2-neoforge",
+]
+
+
+def targets_json(nodes: list[str]) -> str:
+    return json.dumps({"targets": [
+        {"node": n, "jar": f"build/libs/0.1.0/grounded_villages-{n}-0.1.0.jar",
+         "game_versions": [n.rsplit("-", 1)[0]], "loaders": [n.rsplit("-", 1)[1]],
+         "version_number": f"grounded_villages-{n}"}
+        for n in nodes
+    ]})
 
 STONECUTTER_PROPS = textwrap.dedent('''
     deps.fabric_loader = "0.19.5"
@@ -75,6 +104,8 @@ class DoctorFixture(unittest.TestCase):
         (self.root / "gradle" / "wrapper" / "gradle-wrapper.properties").write_text(WRAPPER_PROPS)
         (self.root / "settings.gradle.kts").write_text(SETTINGS_GRADLE)
         (self.root / "stonecutter.properties.toml").write_text(STONECUTTER_PROPS)
+        (self.root / "docs" / "modrinth").mkdir(parents=True)
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(targets_json(SETTINGS_GRADLE_NODES))
         (self.root / "docs" / "spec").mkdir(parents=True)
         (self.root / "docs" / "spec" / "README.md").write_text("spec\n")
         # docs/map.md is generated, never hand-written (docs/spec/README.md is a `.md`, so map.py's
@@ -193,6 +224,63 @@ class DriftedCoordinateTest(DoctorFixture):
         proc = self.run_doctor()
         self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
         self.assertIn("FAIL  stonecutter: 0.5.1 pinned in settings.gradle.kts; matrix pins 0.9.8", proc.stdout)
+
+
+class TargetsTest(DoctorFixture):
+    """docs/modrinth/targets.json (GV-19) must list exactly one target per Stonecutter node --
+    read from settings.gradle.kts, never a hardcoded count, so a node a later ticket adds (GV-17)
+    cannot be forgotten in a release."""
+
+    def setUp(self):
+        super().setUp()
+        write_provisioned_jdk(self.gradle_home / "jdks", "eclipse_adoptium-17", "17.0.20.1", "17.0.20.1")
+        write_provisioned_jdk(self.gradle_home / "jdks", "eclipse_adoptium-21", "21.0.12.1", "21.0.12.1")
+        write_provisioned_jdk(self.gradle_home / "jdks", "eclipse_adoptium-25", "25.0.1", "25.0.1", macos=False)
+
+    def test_all_six_nodes_covered_passes(self):
+        proc = self.run_doctor()
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("ok   targets: docs/modrinth/targets.json covers all 6 Stonecutter node(s)", proc.stdout)
+
+    def test_a_node_missing_from_targets_json_fails_naming_it(self):
+        without_one = [n for n in SETTINGS_GRADLE_NODES if n != "26.2-neoforge"]
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(targets_json(without_one))
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("FAIL  targets: missing from targets.json: ['26.2-neoforge']", proc.stdout)
+
+    def test_a_new_stonecutter_node_not_yet_in_targets_json_fails(self):
+        """GV-17 adding a seventh node: settings.gradle.kts moves first, targets.json has not
+        caught up yet -- this is exactly the gap the check exists to catch."""
+        added = SETTINGS_GRADLE.replace('match("26.2", "fabric", "neoforge")',
+                                         'match("26.2", "fabric", "neoforge")\n            match("1.21.9", "fabric", "neoforge")')
+        (self.root / "settings.gradle.kts").write_text(added)
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("FAIL  targets: missing from targets.json: ['1.21.9-fabric', '1.21.9-neoforge']", proc.stdout)
+
+    def test_an_extra_targets_json_entry_not_a_stonecutter_node_fails(self):
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(
+            targets_json(SETTINGS_GRADLE_NODES + ["1.19.2-fabric"])
+        )
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("FAIL  targets: in targets.json but not a Stonecutter node: ['1.19.2-fabric']", proc.stdout)
+
+    def test_a_duplicated_node_in_targets_json_fails(self):
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(
+            targets_json(SETTINGS_GRADLE_NODES + ["1.20.1-fabric"])
+        )
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("FAIL  targets: duplicated in targets.json: ['1.20.1-fabric']", proc.stdout)
+
+    def test_a_missing_targets_file_fails(self):
+        (self.root / "docs" / "modrinth" / "targets.json").unlink()
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("FAIL  targets:", proc.stdout)
+        self.assertIn("missing", proc.stdout)
 
 
 class StaleSpecCopyTest(DoctorFixture):

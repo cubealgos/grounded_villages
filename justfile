@@ -4,6 +4,7 @@
 
 main_checkout := parent_directory(`git rev-parse --path-format=absolute --git-common-dir`)
 vault_spec := env("GV_VAULT_SPEC", main_checkout / ".." / "heimathafen" / "vault" / "projects" / "grounded_villages" / "spec")
+modrinth_publish := env("GV_MODRINTH_PUBLISH", main_checkout / ".." / "heimathafen" / "standards" / "marketing" / "modrinth" / "modrinth-publish.py")
 
 default:
     @just --list
@@ -109,3 +110,10 @@ release-notes version:
 # publish loop; this recipe stays the build half.
 release:
     ./gradlew chiseledBuild
+
+# GV-19: the six-invocation Modrinth publish loop's own dry run, one confirmation, nothing sent
+# (modrinth-publish.py's --targets mode, `standards/marketing/modrinth-publishing.md`). Prints all
+# six payloads from docs/modrinth/targets.json against docs/modrinth/body.md's shared fields; set
+# GV_MODRINTH_PUBLISH to point at a different heimathafen checkout than the sibling default.
+publish-dry:
+    python3 {{modrinth_publish}} version --repo . --targets docs/modrinth/targets.json --dry-run
