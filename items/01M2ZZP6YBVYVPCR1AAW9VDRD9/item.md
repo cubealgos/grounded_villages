@@ -27,17 +27,17 @@ receives, never reimplements the assembly itself.
 
 ## Acceptance criteria
 
-- [ ] `TIER-REQ-001` through `TIER-REQ-007` implemented
-- [ ] determinism test: same seed + position rolls the same tier every time, across regenerations
-- [ ] weighted-distribution test over many rolls, matching configured `tier.weights.*` within a
+- [x] `TIER-REQ-001` through `TIER-REQ-007` implemented
+- [x] determinism test: same seed + position rolls the same tier every time, across regenerations
+- [x] weighted-distribution test over many rolls, matching configured `tier.weights.*` within a
   reasonable tolerance
-- [ ] `TIER-FAIL-001`: a roll whose budget would exceed `tier.performance_cap` is clamped, not
+- [x] `TIER-FAIL-001`: a roll whose budget would exceed `tier.performance_cap` is clamped, not
   denied — the village stays labelled and shaped as its rolled tier, just capped
-- [ ] `TIER-FAIL-002`: `tier.weights.*` summing to zero falls back to a safe `village`-weighted
+- [x] `TIER-FAIL-002`: `tier.weights.*` summing to zero falls back to a safe `village`-weighted
   distribution with a logged warning, never a crash or an unrollable tier
-- [ ] `city` generates as one centre only at 1.0 — no multi-centre code path exists yet
+- [x] `city` generates as one centre only at 1.0 — no multi-centre code path exists yet
   (`TIER-REQ-004`)
-- [ ] the proposed defaults (weights `30`/`45`/`20`/`5`, depths `3`/`6`/`8`/`10`, max distances
+- [x] the proposed defaults (weights `30`/`45`/`20`/`5`, depths `3`/`6`/`8`/`10`, max distances
   `80`/`96`/`128`/`128`, hamlet minimum `4`, performance cap `3x`) are confirmed or revised at this
   ticket — **to confirm**, tuned against GV-10's harness once it lands
 
