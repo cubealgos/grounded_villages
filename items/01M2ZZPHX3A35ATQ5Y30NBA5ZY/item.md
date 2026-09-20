@@ -21,13 +21,13 @@ added the Wave 1 nodes.
 
 ## Acceptance criteria
 
-- [ ] the chosen point release(s) are documented here with the date and evidence checked (which
+- [x] the chosen point release(s) are documented here with the date and evidence checked (which
   Fabric API build, which NeoForge build, checked live)
-- [ ] the corresponding Stonecutter nodes are added, building real jars using the already-proven
+- [x] the corresponding Stonecutter nodes are added, building real jars using the already-proven
   Wave 1 mixin/logic shape
-- [ ] the hook table (`contracts/platform-matrix.md`) is re-verified against each new version's
+- [x] the hook table (`contracts/platform-matrix.md`) is re-verified against each new version's
   jar as it is added, per `operations/release.md` "Ports" row — never assumed unchanged
-- [ ] `PLATFORM-REQ-002` holds: a renamed/removed hook target fails the build or mod load with a
+- [x] `PLATFORM-REQ-002` holds: a renamed/removed hook target fails the build or mod load with a
   named error, never a silent no-op
 
 ## Constraints and prior findings
