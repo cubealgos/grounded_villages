@@ -94,7 +94,7 @@ above; `02-journeys.md` `UC-003`'s worked sequence shows the shape in context.
 | ID | Failure | Required response |
 |---|---|---|
 | `PIECE-FAIL-001` | A village loses enough pieces to rejection that little of its rolled tier's budget survives | **Resolved: shrink, then move, then vanilla** (`decisions/DEC-010-shrink-move-vanilla.md`). If the surviving pieces still clear `tier.hamlet_minimum_pieces`, keep the village, relabelled `hamlet` (`PIECE-REQ-006`). Otherwise retry at a shifted site up to `site.search_attempts` times, then fall back to vanilla's own unchecked placement (`PIECE-REQ-007`) — no world ever loses a village outright. |
-| `PIECE-FAIL-002` | A rejected piece leaves a neighbouring piece's jigsaw connector with nothing to attach to | **Partially resolved, not fully confirmed.** This mod's rejection sits inside `JigsawPlacement$Placer.tryPlacingChildren`, the same method vanilla's own collision/bounding-box rejection already uses to decide a candidate piece doesn't fit — a strong structural reason to expect a rejected piece follows vanilla's own existing "try the next pool entry, or leave that branch unconnected" path rather than a new failure shape this mod invents. **Not independently bytecode-confirmed**: `village-jigsaw-placement-1-20-1-to-26-2.md` traced the height/water query bytecode but did not trace what happens downstream of a `false` return from the piece-fits check. |
+| `PIECE-FAIL-002` | A rejected piece leaves a neighbouring piece's jigsaw connector with nothing to attach to | **Resolved, bytecode-confirmed (GV-7).** `tryPlacingChildren` is four nested loops (per connector, per candidate element, per rotation, per jigsaw block); every exit — a successful commit, exhausting a connector's own candidates, exhausting a candidate's own rotations — converges on the identical `goto` back to the outer per-connector loop. Rejection sits after vanilla's own `new PoolElementStructurePiece(...)` (vanilla has already decided the candidate fits, there is no further fit-check downstream) but before both `addJunction` calls and `pieces.add`/the `placing` queue's own add — all four gated together on the same verdict, so a rejected candidate never leaves a partial junction on its parent, is never rendered, and is never queued for further recursion, landing on exactly the same "this connector gets nothing" path vanilla's own `EmptyPoolElement` pool entries already use. Confirmed identically across 1.20.1, 1.21.1 and 26.2 via `javap -p -c -l` on the Loom-mapped jars — `grounded_villages.mixin.village.PlacerMixin`'s own javadoc has the full bytecode account. |
 | `PIECE-FAIL-003` | Per-piece evaluation itself costs meaningful generation-thread time on a large (`town`/`city`) village | Bounded indirectly by the tier performance cap (`domains/tiers.md` `TIER-REQ-005`), which limits total piece count regardless of how much per-piece checking costs. |
 
 ## 7. Open questions
@@ -102,10 +102,25 @@ above; `02-journeys.md` `UC-003`'s worked sequence shows the shape in context.
 | Question | Blocks | Decided by |
 |---|---|---|
 | Whether water-in-footprint should ever become a configurable fraction rather than a flat any-water rule | `PIECE-REQ-002` | first ticket, if the flat rule proves too aggressive in practice |
-| Whether a rejected piece's dangling jigsaw connector needs explicit handling, or vanilla's existing piece-rejection path already covers it (structurally likely, not bytecode-confirmed downstream of the fits-check) — kept as a verification item, not a design question | `PIECE-FAIL-002` | first ticket — a targeted trace of `tryPlacingChildren`'s failure path, or an empirical game-test check |
+
+`PIECE-FAIL-002`'s own open question (whether the dangling jigsaw connector needs explicit
+handling) is resolved — see `PIECE-FAIL-002`'s own row in §6 above, GV-7.
 
 ## 8. Decisions
 
 - `PIECE-FAIL-001`'s minimum-viable-size question is `decisions/DEC-010-shrink-move-vanilla.md`:
   shrink to `hamlet` if the surviving pieces clear the minimum, else move to a shifted site, else
   fall back to vanilla — no world loses a village.
+- **`PIECE-REQ-006`'s relabel only engages when something was actually rejected (Claude, GV-7,
+  2026-09-21, flagged for Kevin to confirm).** Read fully literally, `PIECE-REQ-006` (surviving
+  count `>=` `tier.hamlet_minimum_pieces` → keep, relabelled `hamlet` regardless of originally
+  rolled tier) has no stated floor on how many pieces were rejected — applied unconditionally, it
+  would relabel every village `hamlet` the instant `piece.enabled` is true, since
+  `hamlet_minimum_pieces`' own default (4) sits far below a typical village's real piece count
+  (`docs/baseline/README.md`'s own GV-7 sweep: 30-127 pieces). Shipped instead:
+  `grounded_villages.piece.PieceLadder.Outcome.UNAFFECTED` short-circuits the whole ladder —
+  relabel included — whenever zero pieces were rejected, matching `PIECE-FAIL-001`'s own title ("a
+  village loses enough pieces to rejection") and `PIECE-REQ-006`'s own "keep the village as
+  generated" wording, which only reads as a meaningful description of a no-op for a village that
+  lost nothing. `PieceLadderTest`'s own `zeroRejectionsIsUnaffectedRegardlessOfSurvivorCount` is
+  this reading's executable form.

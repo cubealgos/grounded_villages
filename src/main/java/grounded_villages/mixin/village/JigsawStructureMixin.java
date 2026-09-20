@@ -53,6 +53,22 @@ import java.util.Optional;
  * TierAssignmentContext} is set before {@code JigsawPlacementMixin}'s write-back methods ever run,
  * since {@code findGenerationPoint} calls {@code addPieces} itself (this method's javadoc above),
  * never the other way around.
+ *
+ * <p><b>GV-7's own shrink/move/vanilla ladder (`decisions/DEC-010-shrink-move-vanilla.md`) does
+ * not live here</b>, even though this class gates on the village tag: {@code findGenerationPoint}
+ * only ever calls {@code JigsawPlacement.addPieces} once and gets back an {@code Optional<
+ * Structure.GenerationStub>} whose actual piece placement is <i>deferred</i> -- {@code addPieces}
+ * builds a {@code Consumer<StructurePiecesBuilder>} and hands it to the returned stub
+ * unexecuted (confirmed by {@code javap}: the lambda backing {@code tryPlacingChildren}'s whole
+ * call chain is only ever passed to {@code new Structure.GenerationStub(pos, consumer)}, never
+ * invoked inside {@code addPieces} itself). Vanilla's own caller (outside this whole class,
+ * {@code Structure.generate}) is what actually invokes that consumer, with the real {@code
+ * StructurePiecesBuilder} -- meaning a redirect scoped to the call to {@code addPieces} from
+ * inside {@code findGenerationPoint} (an earlier draft of this ticket's own work) would run its
+ * ladder logic before any piece had actually been placed, always seeing zero accepted/rejected.
+ * The ladder therefore lives in {@link JigsawPlacementMixin} instead, wrapping the {@code
+ * GenerationStub} constructor call directly inside {@code addPieces} itself -- see that class'
+ * own javadoc for the full mechanism and why it is safe against re-entrant nested calls.
  */
 @Mixin(JigsawStructure.class)
 abstract class JigsawStructureMixin {

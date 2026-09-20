@@ -12,5 +12,5 @@ The start-piece hook (ticket build item 1): fires once per village candidate, fr
 Sets the #minecraft:village tag gate (decisions/DEC-007-village-tag-scope.md) that JigsawPlacementMixin and PlacerMixin read via VillageTagContext.
 
 ### `class PlacerMixin` — `src/main/java/grounded_villages/mixin/village/PlacerMixin.java`
-The per-piece hook (ticket build item 1): fires once per already-placed piece as vanilla's own jigsaw assembly tries to expand it, from the package-private JigsawPlacement$Placer.tryPlacingChildren -- referenced via targets (a string, not a class literal) since Placer has default (package) access and cannot otherwise be named from grounded_villages.mixin.village.
+The per-piece hook (`docs/spec/domains/pieces.md`, ticket GV-7 build item 1): real, per-child accept/reject, superseding GV-5's coarse per-parent-only wiring (this class' own javadoc used to read "real per-child accept/reject ...
 

@@ -33,7 +33,10 @@ def load_results(paths: list[str]) -> list[dict]:
 
 
 def render_table(results: list[dict]) -> str:
-    headers = ["seed", "structure", "start", "pieces", "height spread", "water fraction", "tier", "ms"]
+    headers = [
+        "seed", "structure", "start", "pieces", "height spread", "water fraction", "tier",
+        "rejected (w/h)", "outcome", "ms",
+    ]
     rows = []
     for r in results:
         start = f"({r['startX']}, {r['startY']}, {r['startZ']})"
@@ -45,6 +48,8 @@ def render_table(results: list[dict]) -> str:
             f"{r['heightSpread']:.1f}",
             f"{r['waterFraction'] * 100:.1f}%",
             r.get("tier") or "-",
+            f"{r.get('rejectedWater', 0)}/{r.get('rejectedHeight', 0)}",
+            r.get("ladderOutcome") or "-",
             str(r["runtimeMillis"]),
         ])
 
@@ -65,6 +70,13 @@ def summary(results: list[dict]) -> dict:
     spreads = [r["heightSpread"] for r in results]
     waters = [r["waterFraction"] for r in results]
     pieces = [r["pieceCount"] for r in results]
+    rejected_water = sum(r.get("rejectedWater", 0) for r in results)
+    rejected_height = sum(r.get("rejectedHeight", 0) for r in results)
+    outcomes: dict[str, int] = {}
+    for r in results:
+        outcome = r.get("ladderOutcome")
+        if outcome:
+            outcomes[outcome] = outcomes.get(outcome, 0) + 1
     return {
         "seeds": len(results),
         "mean_height_spread": sum(spreads) / len(spreads),
@@ -72,6 +84,9 @@ def summary(results: list[dict]) -> dict:
         "mean_water_fraction": sum(waters) / len(waters),
         "max_water_fraction": max(waters),
         "mean_piece_count": sum(pieces) / len(pieces),
+        "total_rejected_water": rejected_water,
+        "total_rejected_height": rejected_height,
+        "ladder_outcomes": outcomes,
     }
 
 
@@ -90,6 +105,10 @@ def main() -> None:
         f"(max {stats['max_height_spread']:.1f}), mean water fraction "
         f"{stats['mean_water_fraction'] * 100:.1f}% (max {stats['max_water_fraction'] * 100:.1f}%), "
         f"mean piece count {stats['mean_piece_count']:.1f}"
+    )
+    print(
+        f"rejected pieces (total): {stats['total_rejected_water']} water, "
+        f"{stats['total_rejected_height']} height deviation -- ladder outcomes: {stats['ladder_outcomes']}"
     )
 
     report_path = Path(sys.argv[1]).resolve().parent / "report.json"
