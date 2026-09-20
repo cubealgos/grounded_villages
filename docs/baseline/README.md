@@ -599,3 +599,99 @@ on both NeoForge nodes.
   the Stonecutter-preprocessor-split first attempt did not, see that same section for why).
 - `just check` (`chiseledCheck` on all six nodes, `chiseledBuild`, `map-check`, `tools/`'s own
   13 Python unit tests): **BUILD SUCCESSFUL**, zero `FAILED` lines anywhere in the run.
+## GV-15: Forge proof
+
+The Forge 1.20.1 leg's own written verdict for `docs/spec/contracts/platform-matrix.md`'s "Third
+correction" -- the session log excerpts and timings behind that entry's summary. No `seedSweep`
+node switch exists for this leg yet (GV-12, in parallel), so this is a manual live-server session,
+per the ticket's own fallback instruction, not the harness's JSON output.
+
+### Build and jar inspection
+
+`./gradlew :1.20.1-forge:build` (clean, single-target): **BUILD SUCCESSFUL in 7s**, no `Cannot
+remap` or other Mixin warnings. `versions/1.20.1-forge/build/libs/grounded_villages-forge-0.1.0+1.20.1.jar`
+carries `MixinConfigs: grounded_villages.mixins.json` in its manifest and a 4.1KB
+`grounded_villages.refmap.json` with real SRG (`m_...`) targets for every Minecraft-side member the
+three mixins touch. Full detail in `docs/spec/contracts/platform-matrix.md`'s own "Third
+correction" section, including the missing-`"refmap"`-key bug this ticket found and fixed.
+
+### Production server: before the fix
+
+Forge 47.4.23 installed via the official installer (`forge-1.20.1-47.4.23-installer.jar`, **8.6MB,
+downloaded in ~2s**; `--installServer` under Java 17, **27.7s**, ~160MB of libraries including the
+real SRG-named `server-1.20.1-20230612.114412-srg.jar`) into a scratch directory, `eula=true`, the
+jar built above copied into `mods/`. First boot, before the `"refmap"` key fix:
+
+```
+[main/FATAL] [mixin/]: Mixin apply failed grounded_villages.mixins.json:village.JigsawStructureMixin
+  -> net.minecraft.world.level.levelgen.structure.structures.JigsawStructure:
+  org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException Critical injection
+  failure: @Inject annotation on gv$gateOnVillageTag could not find any targets matching
+  'findGenerationPoint' in net.minecraft.world.level.levelgen.structure.structures.JigsawStructure.
+  No refMap loaded.
+```
+
+Server crashes outright at world load, every time -- this is the actual SRG-runtime failure mode
+the ticket's own acceptance criteria are checking for, caught live rather than assumed away by a
+dev-environment boot (MDG legacyforge dev runs are Mojang-named, so this exact bug is invisible
+there -- confirmed separately via `:1.20.1-forge:runServer`, which never hit it).
+
+### Production server: after the fix
+
+Same installed server, same `mods/` jar rebuilt with the fix, `-Dmixin.debug.verbose=true
+-Dgrounded_villages.debug=true` added to `user_jvm_args.txt`. Clean boot:
+
+```
+[mixin/]: mixin.env.refMapRemappingEnv : - <searge>
+...
+[mixin/]: Mixing village.JigsawStructureMixin from grounded_villages.mixins.json into net.minecraft.world.level.levelgen.structure.structures.JigsawStructure
+[mixin/]: Mixing village.JigsawPlacementMixin from grounded_villages.mixins.json into net.minecraft.world.level.levelgen.structure.pools.JigsawPlacement
+[mixin/]: Mixing village.PlacerMixin from grounded_villages.mixins.json into net.minecraft.world.level.levelgen.structure.pools.JigsawPlacement$Placer
+[minecraft/DedicatedServer]: Done (20.157s)! For help, type "help"
+```
+
+`mixin.env.refMapRemappingEnv : <searge>` is Mixin's own confirmation this is the SRG runtime, not
+a deobfuscated dev one. Villages within render distance of spawn generated during the normal
+spawn-area pre-generation pass already, firing the full hook chain unprompted -- **13 village
+starts, 264 `PieceGate` decisions** (both `accept` and `reject ... (WATER)` / `reject ...
+(HEIGHT_DEVIATION)` reasons observed), across a mix of `HAMLET`/`VILLAGE`/`TOWN` tier rolls, all on
+the real SRG bytecode.
+
+### Seed comparison against the Fabric baseline
+
+`/locate structure minecraft:village_plains` + `/forceload` around the result, `level-seed` set to
+match `docs/baseline/seeds.txt`'s first entries, compared against
+`docs/baseline/grounded-26.2-fabric-10-seeds-all.json`'s own seed rows (all domains enabled,
+shipped-default config, `docs/baseline/README.md`'s own "GV-7" table above):
+
+| seed | `/locate` start (Forge) | Fabric baseline start | match | tier (Forge) | tier (Fabric) | non-street rejected (Forge) | non-street rejected (Fabric, w+h) |
+|---|---|---|---|---|---|---|---|
+| 1 | `[640, ~, 816]` | `(640, 0, 816)` | yes | hamlet (shrunk from VILLAGE) | hamlet | 6 | 6 (3+3) |
+| 2 | `[-416, ~, 240]` | `(-416, 0, 240)` | yes | not measured (see below) | hamlet | not measured | 0 (0+0) |
+
+Seed 1: exact position match, exact final-tier match, exact non-street-rejected-count match
+(`PieceLadder fired: shrink (27 non-street, 6 rejected)`, then `relabelled hamlet (was VILLAGE)`).
+Seed 2: `/locate`'s own structure-set position matched Fabric's exactly (loader-independent, as
+expected -- vanilla's structure-set placement math is seed-derived, not mixin-dependent), but the
+`/forceload` of that village's chunks did not finish within this session's own time budget --
+consistent with `docs/baseline/README.md`'s own GV-7 "watchdog" finding above (the shrink/move/
+vanilla ladder can cost up to 3x a full jigsaw-assembly attempt, and this fleet has already seen a
+single tick blow past 60s on a costly candidate). Not pursued further: this is supplementary
+comparison data, not one of the ticket's own acceptance criteria, and the same live proof already
+stands on seed 1 plus the unprompted 13-village/264-decision sample above. Seed 3 not attempted for
+the same reason.
+
+### NOTICE licence re-verification
+
+`raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/LICENSE.txt` read live 2026-09-21:
+"Unless noted below, Minecraft Forge, Forge Mod Loader, and all parts herein are licensed under the
+terms of the LGPL 2.1" -- confirms `NOTICE`'s existing LGPL-2.1 line by reading the file text
+directly, not GitHub's own licence auto-detector (which currently reports `NOASSERTION` for this
+specific repository -- noted in `platform-matrix.md`'s own "Third correction" for the next
+verifier). No `NOTICE` change needed; the existing line was already correct, now independently
+re-confirmed per this ticket's own acceptance criterion.
+
+### Full-fleet build
+
+`./gradlew chiseledBuild chiseledCheck --continue`: **BUILD SUCCESSFUL in 12s**, all six nodes,
+zero `Cannot remap` or other Mixin warnings anywhere in the log.

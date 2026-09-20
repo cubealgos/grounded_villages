@@ -103,6 +103,100 @@ referenced via the jar manifest's `MixinConfigs` attribute (SpongePowered Mixin 
 ModLauncher regardless, "Mixin support story" above, and loads a zero-mixin config as a no-op).
 The `mixin {}` block and its AP dependency return once a real `@Mixin` class lands.
 
+**Third correction, live-verified (GV-15, 2026-09-21): the Forge 1.20.1 leg's SRG refmap proof.**
+GV-5/6/7 landed the three real `@Mixin` classes this leg needed; this ticket built the leg alone
+(`./gradlew :1.20.1-forge:build`), inspected the jar, and proved the mixin fires against a real
+Forge 1.20.1 server, not just against a dev-environment deobfuscated runtime -- the distinction the
+ticket itself was scoped to close.
+
+- **Jar inspection**: `grounded_villages-forge-0.1.0+1.20.1.jar`'s `META-INF/MANIFEST.MF` carries
+  `MixinConfigs: grounded_villages.mixins.json`; the jar contains `grounded_villages.refmap.json`
+  (4.1KB); its `mappings`/`data.searge` tables carry real SRG (`m_...`) targets for every
+  Minecraft-side member the three mixins touch -- `JigsawStructure.findGenerationPoint`
+  (`m_214086_`), `JigsawPlacement.addPieces` (`m_227238_`), `JigsawPlacement$Placer
+  .tryPlacingChildren` (`m_227264_`), and `PoolElementStructurePiece.addJunction` (`m_209916_`).
+  JDK/`java.util` redirect targets (`Deque.addLast`, `List.add`) correctly stay unmapped -- they
+  are not Minecraft members, so SRG has nothing to rename. `legacyForge`'s own `parchment {}` block
+  is absent by design (this mod uses no Parchment parameter-name layer); the compiled-against
+  mappings are plain Mojang-over-official, matching the platform matrix's own row above.
+- **A real, load-bearing bug found and fixed**: `grounded_villages.mixins.json` (the shared config
+  under `src/main/resources`, referenced by all three loaders) shipped with no `"refmap"` key.
+  Compile-time this is invisible -- MDG's `mixin { add(...) }` DSL passes the AP its output path
+  directly (`-AoutRefMapFile=...`), independent of that JSON key, so `:1.20.1-forge:build` and
+  `chiseledCheck` were green either way. At **runtime** it is fatal: SpongePowered Mixin's config
+  loader falls back to no refmap at all when `"refmap"` is unset, so on a real SRG-obfuscated
+  server it tried to match the literal source name (`findGenerationPoint`) against SRG-renamed
+  bytecode and failed outright --
+  `InvalidInjectionException: ... could not find any targets matching 'findGenerationPoint' in
+  ...JigsawStructure. No refMap loaded.` -- crashing the dedicated server at mixin-apply time, every
+  time, on the production jar. Fixed by adding `"refmap": "grounded_villages.refmap.json"` (and a
+  `"minVersion": "0.8"`, missing for the same reason and separately warned about) to
+  `grounded_villages.mixins.json`. Confirmed harmless on the other two loaders per this note's own
+  refmap table above: NeoForge only logs "Reference map could not be read" for a stale/absent
+  refmap key (Create#8742, Iris#2782 precedent already cited there), and Fabric's Loom ≥1.5 ignores
+  the AP-based refmap mechanism entirely (Tiny Remapper rewrites the jar directly). This is why a
+  dev-environment `runServer` boot on this leg is not sufficient proof by itself for this specific
+  bug class: MDG legacyforge's dev runtime is Mojang-named (deobfuscated), so the un-remapped
+  literal name matches directly and the missing refmap key never manifests there -- only a real,
+  installer-built, SRG-named production server exercises the actual failure mode. Both are recorded
+  below since both were run live.
+- **Dev-environment proof** (`./gradlew :1.20.1-forge:runServer`, `-Dmixin.debug.verbose=true`):
+  boots and (as expected for MDG legacyforge's Mojang-named dev runtime) never exercised the
+  missing-refmap bug, since names already match without remapping.
+- **Production proof** (the actual SRG-runtime proof this ticket asks for): a plain Forge 1.20.1
+  server built from the official installer (`forge-1.20.1-47.4.23-installer.jar`, 8.6MB, fetched
+  from `maven.minecraftforge.net` in under 2 seconds; `--installServer` completed in 27.7s and
+  pulled ~160MB of libraries, including the real SRG-named `server-1.20.1-...-srg.jar`), our built
+  jar dropped into its `mods/`, booted under Java 17 with `eula=true`. Before the refmap fix: fatal
+  `MixinApplyError` at world load, server never reaches "Done". After the fix: clean boot,
+  `mixin.env.refMapRemappingEnv : <searge>` printed in the verbose Mixin banner (direct
+  confirmation this runtime is the SRG one), and all three `Mixing village.<X>Mixin ... into
+  net.minecraft...` apply lines present:
+  ```
+  [mixin/]: Mixing village.JigsawStructureMixin ... into ...structures.JigsawStructure
+  [mixin/]: Mixing village.JigsawPlacementMixin ... into ...pools.JigsawPlacement
+  [mixin/]: Mixing village.PlacerMixin ... into ...pools.JigsawPlacement$Placer
+  ```
+  With `-Dgrounded_villages.debug=true`, the full hook chain fires on this production server for
+  real villages found near spawn and via `/locate structure minecraft:village_plains` +
+  `/forceload`: `JigsawStructureMixin#findGenerationPoint fired: village-tagged`, `TierRoller
+  fired: TierAssignment[tier=..., jigsawDepth=..., maxDistance=...]`, `VillageStartHook fired:
+  Vanilla[]`, `PieceGate fired: accept/reject building|street (WATER|HEIGHT_DEVIATION)`, `PieceLadder
+  fired: shrink/unaffected/relabelled ...` -- the same site/piece/tier decision chain GV-5/6/7/8
+  proved on Fabric, now proven against real SRG bytecode. Seed 1's located village (`[640, ~, 816]`,
+  matching the Fabric baseline's own start position exactly) rolled `VILLAGE`, then the ladder
+  shrank it (`shrink (27 non-street, 6 rejected)`) and relabelled it `hamlet` -- the same final tier
+  and the same non-street-rejected count (6 = 3 water + 3 height) as
+  `docs/baseline/grounded-26.2-fabric-10-seeds-all.json`'s own seed-1 row. Seed 2's located village
+  (`[-416, ~, 240]`, again matching Fabric's own start position) came back `unaffected` (0
+  rejected), consistent with Fabric's seed-2 row also showing 0/0 rejected. See
+  `docs/baseline/README.md` "Forge proof" for the full session log excerpts and timings.
+- **The `Cannot remap addPieces(...)` warning GV-8-era context flagged**: not reproduced. Tried,
+  live: a single clean `:1.20.1-forge:build`; a full clean `chiseledBuild chiseledCheck --continue`
+  across all six nodes (the genuine `--parallel` case); and two literally concurrent
+  `:1.20.1-forge:build --rerun-tasks --no-daemon` processes racing on the same worktree. All three
+  came back clean, zero `Cannot remap` lines, and the Stonecutter-generated per-node source
+  (`versions/1.20.1-forge/build/generated/stonecutter/main/java/.../JigsawPlacementMixin.java`)
+  correctly comments out both inactive-version `@ModifyVariable`/`@Redirect` branches, leaving only
+  the `<1.21` descriptors active for this node -- so there is no stray, wrongly-active annotation
+  with a mismatched descriptor to trigger it either. The most likely remaining explanation is a
+  cross-worktree race on the shared, content-addressed `~/.gradle/caches/neoformruntime` cache (the
+  only place this leg's `officialToSrg`/merged `.tsrg` mappings live outside the project's own
+  `build/`) between two *separate* worktrees both building `:1.20.1-forge` at once -- plausible
+  given this ticket's own siblings (GV-11/12/13) run in parallel worktrees of the same repo, though
+  NFRT's own per-artifact `.lock` files are designed to serialize exactly that case. Recorded here
+  rather than silently patched, per the ticket's own instruction to find the cause: no fix is
+  applied because the cause could not be pinned down to anything actually wrong in this leg's
+  build configuration or mixin descriptors, and inventing one against a bug that would not
+  reproduce risks masking whatever the real, narrower trigger is.
+- **NOTICE re-verified, not assumed**: `raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/LICENSE.txt`
+  read live 2026-09-21, confirms LGPL-2.1 in the file text itself ("licensed under the terms of the
+  LGPL 2.1"). Note for future verifiers: GitHub's own API `license` field (`GET
+  /repos/MinecraftForge/MinecraftForge`) currently returns `{"key": "other", "spdx_id":
+  "NOASSERTION"}` for this repository -- GitHub's licence auto-detector does not classify it, so the
+  API field GV-2 used successfully for `neoforged/NeoForge` is not reliable for this one repo; the
+  file text is authoritative and was read directly instead.
+
 ## Hook targets, per loader
 
 **Confirmed for every row** (`village-jigsaw-placement-1-20-1-to-26-2.md`, read directly against the

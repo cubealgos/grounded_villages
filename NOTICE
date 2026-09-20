@@ -9,6 +9,10 @@ It runs on and is built against:
   only, never redistributed.
 - Minecraft (Mojang), via Mojang's own official mappings on every node: this mod adds no block,
   item, or entity of its own; no Mojang asset (texture, model, or sound) is copied or redistributed.
+  The Modrinth listing icon (`docs/modrinth/icon.png`) is a render of vanilla's own village bell
+  item sprite (`minecraft:bell`, `textures/item/bell.png`), composed onto the cubealgos navy badge
+  at build time by `tools/icon.py` from a local Minecraft client jar; no asset file is copied into
+  this repo, only the rendered composite `icon.png` (`just icon`).
 
 ## Prior art
 
