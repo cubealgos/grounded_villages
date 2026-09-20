@@ -1,20 +1,25 @@
 package grounded_villages.mixin.village;
 
+import grounded_villages.config.ConfigHolder;
 import grounded_villages.hook.GenerationContext;
 import grounded_villages.hook.HookDebug;
 import grounded_villages.hook.HookRegistry;
 import grounded_villages.hook.StartDecision;
 import grounded_villages.hook.TerrainSampler;
+import grounded_villages.mixinsupport.TierAssignmentContext;
 import grounded_villages.mixinsupport.VillageTagContext;
+import grounded_villages.tier.TierAssignment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.pools.JigsawPlacement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
+import net.minecraft.world.level.levelgen.structure.structures.JigsawStructure;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Optional;
@@ -46,6 +51,23 @@ import java.util.Optional;
  * either, so there is nothing to enact yet. Wiring that write-back (a {@code BlockPos} local
  * capture/rewrite) is domains/site.md's own scoring logic, added with GV-6's real
  * {@code SiteSelector}.
+ *
+ * <p><b>GV-8 write-back</b> (`docs/spec/domains/tiers.md`): {@code maxDepth} and {@code
+ * maxDistanceFromCenter} are plain method parameters read by the rest of {@code addPieces}' own
+ * body (and threaded down into the private recursive worker), not locals this method's own
+ * {@code @Inject} can rewrite from a {@code CallbackInfoReturnable} -- {@code @ModifyVariable} is
+ * the mechanism that lets a mixin substitute a parameter's value as the method body itself reads
+ * it, one method per parameter below ({@code gv$modifyMaxDepth}/{@code gv$modifyMaxDistance}),
+ * targeting the same version-branched selector strings as {@code gv$onAddPieces} above (LVT slot
+ * {@code index}, not {@code ordinal}, since {@code maxDepth} and {@code maxDistanceFromCenter} are
+ * both {@code int} in the 1.20.1/1.21.1 branches and an {@code ordinal} count would be ambiguous
+ * between them; explicit slot indices -- 3 for {@code maxDepth}, 7 for {@code
+ * maxDistanceFromCenter} -- are stable across all three branches since every parameter ahead of
+ * {@code maxDistanceFromCenter} keeps the same type and position in all three, only the trailing
+ * parameters after it differ, per the version-delta correction above). Both read the tier {@link
+ * JigsawStructureMixin} already rolled and stashed in {@link TierAssignmentContext} -- rolling
+ * happens once, in {@code JigsawStructureMixin}, not here (see that class's own javadoc "GV-8 also
+ * rolls the tier here" for why).
  */
 @Mixin(JigsawPlacement.class)
 abstract class JigsawPlacementMixin {
@@ -67,6 +89,24 @@ abstract class JigsawPlacementMixin {
             CallbackInfoReturnable<Optional<Structure.GenerationStub>> cir) {
         gv$fireStartHook(context, pos);
     }
+
+    @ModifyVariable(
+            method = "addPieces(Lnet/minecraft/world/level/levelgen/structure/Structure$GenerationContext;Lnet/minecraft/core/Holder;Ljava/util/Optional;ILnet/minecraft/core/BlockPos;ZLjava/util/Optional;I)Ljava/util/Optional;",
+            at = @At("HEAD"),
+            index = 3
+    )
+    private static int gv$modifyMaxDepth(int maxDepth) {
+        return gv$tieredDepth(maxDepth);
+    }
+
+    @ModifyVariable(
+            method = "addPieces(Lnet/minecraft/world/level/levelgen/structure/Structure$GenerationContext;Lnet/minecraft/core/Holder;Ljava/util/Optional;ILnet/minecraft/core/BlockPos;ZLjava/util/Optional;I)Ljava/util/Optional;",
+            at = @At("HEAD"),
+            index = 7
+    )
+    private static int gv$modifyMaxDistance(int maxDistanceFromCenter) {
+        return gv$tieredMaxDistance(maxDistanceFromCenter);
+    }
     //?} elif <26.1 {
     /*@Inject(
             method = "addPieces(Lnet/minecraft/world/level/levelgen/structure/Structure$GenerationContext;Lnet/minecraft/core/Holder;Ljava/util/Optional;ILnet/minecraft/core/BlockPos;ZLjava/util/Optional;ILnet/minecraft/world/level/levelgen/structure/pools/alias/PoolAliasLookup;Lnet/minecraft/world/level/levelgen/structure/pools/DimensionPadding;Lnet/minecraft/world/level/levelgen/structure/templatesystem/LiquidSettings;)Ljava/util/Optional;",
@@ -86,6 +126,24 @@ abstract class JigsawPlacementMixin {
             net.minecraft.world.level.levelgen.structure.templatesystem.LiquidSettings liquidSettings,
             CallbackInfoReturnable<Optional<Structure.GenerationStub>> cir) {
         gv$fireStartHook(context, pos);
+    }
+
+    @ModifyVariable(
+            method = "addPieces(Lnet/minecraft/world/level/levelgen/structure/Structure$GenerationContext;Lnet/minecraft/core/Holder;Ljava/util/Optional;ILnet/minecraft/core/BlockPos;ZLjava/util/Optional;ILnet/minecraft/world/level/levelgen/structure/pools/alias/PoolAliasLookup;Lnet/minecraft/world/level/levelgen/structure/pools/DimensionPadding;Lnet/minecraft/world/level/levelgen/structure/templatesystem/LiquidSettings;)Ljava/util/Optional;",
+            at = @At("HEAD"),
+            index = 3
+    )
+    private static int gv$modifyMaxDepth(int maxDepth) {
+        return gv$tieredDepth(maxDepth);
+    }
+
+    @ModifyVariable(
+            method = "addPieces(Lnet/minecraft/world/level/levelgen/structure/Structure$GenerationContext;Lnet/minecraft/core/Holder;Ljava/util/Optional;ILnet/minecraft/core/BlockPos;ZLjava/util/Optional;ILnet/minecraft/world/level/levelgen/structure/pools/alias/PoolAliasLookup;Lnet/minecraft/world/level/levelgen/structure/pools/DimensionPadding;Lnet/minecraft/world/level/levelgen/structure/templatesystem/LiquidSettings;)Ljava/util/Optional;",
+            at = @At("HEAD"),
+            index = 7
+    )
+    private static int gv$modifyMaxDistance(int maxDistanceFromCenter) {
+        return gv$tieredMaxDistance(maxDistanceFromCenter);
     }
     *///?} else {
     /*@Inject(
@@ -107,6 +165,24 @@ abstract class JigsawPlacementMixin {
             CallbackInfoReturnable<Optional<Structure.GenerationStub>> cir) {
         gv$fireStartHook(context, pos);
     }
+
+    @ModifyVariable(
+            method = "addPieces(Lnet/minecraft/world/level/levelgen/structure/Structure$GenerationContext;Lnet/minecraft/core/Holder;Ljava/util/Optional;ILnet/minecraft/core/BlockPos;ZLjava/util/Optional;Lnet/minecraft/world/level/levelgen/structure/structures/JigsawStructure$MaxDistance;Lnet/minecraft/world/level/levelgen/structure/pools/alias/PoolAliasLookup;Lnet/minecraft/world/level/levelgen/structure/pools/DimensionPadding;Lnet/minecraft/world/level/levelgen/structure/templatesystem/LiquidSettings;)Ljava/util/Optional;",
+            at = @At("HEAD"),
+            index = 3
+    )
+    private static int gv$modifyMaxDepth(int maxDepth) {
+        return gv$tieredDepth(maxDepth);
+    }
+
+    @ModifyVariable(
+            method = "addPieces(Lnet/minecraft/world/level/levelgen/structure/Structure$GenerationContext;Lnet/minecraft/core/Holder;Ljava/util/Optional;ILnet/minecraft/core/BlockPos;ZLjava/util/Optional;Lnet/minecraft/world/level/levelgen/structure/structures/JigsawStructure$MaxDistance;Lnet/minecraft/world/level/levelgen/structure/pools/alias/PoolAliasLookup;Lnet/minecraft/world/level/levelgen/structure/pools/DimensionPadding;Lnet/minecraft/world/level/levelgen/structure/templatesystem/LiquidSettings;)Ljava/util/Optional;",
+            at = @At("HEAD"),
+            index = 7
+    )
+    private static JigsawStructure.MaxDistance gv$modifyMaxDistance(JigsawStructure.MaxDistance maxDistanceFromCenter) {
+        return gv$tieredMaxDistance(maxDistanceFromCenter);
+    }
     *///?}
 
     private static void gv$fireStartHook(Structure.GenerationContext context, BlockPos pos) {
@@ -118,4 +194,49 @@ abstract class JigsawPlacementMixin {
         StartDecision decision = HookRegistry.startHook().onStart(hookContext, pos);
         HookDebug.fired("VillageStartHook", decision);
     }
+
+    /**
+     * {@code TIER-REQ-004}: feeds the rolled tier's already-capped {@code jigsawDepth} in place of
+     * vanilla's own {@code maxDepth}, for village-tagged structures, when {@code tier.enabled}.
+     * Returns {@code vanillaMaxDepth} unchanged for every other case (not village-tagged, tiers
+     * disabled, or -- defensively -- no assignment was ever rolled for this thread's current call)
+     * so a disabled or not-yet-rolled tier system is always a true no-op, never a silent default
+     * substitution.
+     */
+    private static int gv$tieredDepth(int vanillaMaxDepth) {
+        if (!VillageTagContext.isVillage() || !ConfigHolder.get().tier().enabled()) {
+            return vanillaMaxDepth;
+        }
+        TierAssignment assignment = TierAssignmentContext.get();
+        return assignment != null ? assignment.jigsawDepth() : vanillaMaxDepth;
+    }
+
+    //? if <26.1 {
+    /**
+     * {@code TIER-REQ-004}: the 1.20.1/1.21.1 {@code int max_distance_from_center} write-back --
+     * see {@link #gv$tieredDepth} for the shared no-op conditions.
+     */
+    private static int gv$tieredMaxDistance(int vanillaMaxDistance) {
+        if (!VillageTagContext.isVillage() || !ConfigHolder.get().tier().enabled()) {
+            return vanillaMaxDistance;
+        }
+        TierAssignment assignment = TierAssignmentContext.get();
+        return assignment != null ? assignment.maxDistance() : vanillaMaxDistance;
+    }
+    //?} else {
+    /*
+    private static JigsawStructure.MaxDistance gv$tieredMaxDistance(JigsawStructure.MaxDistance vanillaMaxDistance) {
+        if (!VillageTagContext.isVillage() || !ConfigHolder.get().tier().enabled()) {
+            return vanillaMaxDistance;
+        }
+        TierAssignment assignment = TierAssignmentContext.get();
+        if (assignment == null) {
+            return vanillaMaxDistance;
+        }
+        // village-jigsaw-placement-1-20-1-to-26-2.md SS A: "built from a single int sets both
+        // horizontal and vertical to that value" -- the tier system rolls one symmetric distance,
+        // same as every pre-26.2 version's own plain int did.
+        return new JigsawStructure.MaxDistance(assignment.maxDistance(), assignment.maxDistance());
+    }
+    *///?}
 }

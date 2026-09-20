@@ -3,9 +3,10 @@ package grounded_villages.harness;
 /**
  * One village's seed-sweep measurement (GV-10 acceptance criteria): start position, piece count,
  * height spread and water fraction under its footprint, and the tier if the mod has set one
- * ({@code docs/spec/domains/tiers.md} -- not implemented as of this ticket, so {@link #tier} is
- * always {@code null} today; GV-8 fills it in). Plain data holder, serialized with Gson (already
- * on the game classpath via Minecraft itself -- no new dependency).
+ * ({@code docs/spec/domains/tiers.md} -- {@link #tier} is {@code null} when {@code tier.enabled}
+ * is {@code false}, otherwise the rolled tier's lower-case name, e.g. {@code "hamlet"}, read back
+ * via {@code grounded_villages.hook.TierAssignmentRegistry}, GV-8). Plain data holder, serialized
+ * with Gson (already on the game classpath via Minecraft itself -- no new dependency).
  */
 public final class VillageSweepResult {
     public final long seed;

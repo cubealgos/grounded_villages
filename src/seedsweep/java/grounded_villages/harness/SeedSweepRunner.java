@@ -1,6 +1,8 @@
 package grounded_villages.harness;
 
 import com.google.gson.GsonBuilder;
+import grounded_villages.hook.TierAssignmentRegistry;
+import grounded_villages.tier.TierAssignment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
@@ -27,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * GV-10's headless seed-sweep harness core: finds the first village near spawn on a live,
@@ -138,6 +141,14 @@ public final class SeedSweepRunner {
 
         Identifier structureId = structureRegistry.getKey(start.getStructure());
 
+        // GV-8: the mixin rolls the tier once, from JigsawStructureMixin, well before this
+        // harness ever runs -- TierAssignmentRegistry is the "static last-assignment map keyed by
+        // start chunk" the ticket names as the read-back mechanism, since nothing in this
+        // after-the-fact StructureStart read carries the roll itself. null when tiers are
+        // disabled (tier.enabled=false), matching GV-10's own pre-GV-8 default.
+        TierAssignment tierAssignment = TierAssignmentRegistry.get(startChunk);
+        String tier = tierAssignment == null ? null : tierAssignment.tier().name().toLowerCase(Locale.ROOT);
+
         VillageSweepResult result = new VillageSweepResult(
             seed,
             structureId == null ? "unknown" : structureId.toString(),
@@ -148,7 +159,7 @@ public final class SeedSweepRunner {
             heightSpread,
             waterFraction,
             totalSamples,
-            null, // GV-8 tiers not yet implemented as of this ticket.
+            tier,
             runtimeMillis
         );
 
@@ -159,8 +170,8 @@ public final class SeedSweepRunner {
         Files.writeString(absoluteOutput, new GsonBuilder().setPrettyPrinting().create().toJson(result));
 
         LOGGER.info(
-            "seed {}: village {} at {} -- {} pieces, height spread {}, water fraction {} ({} ms)",
-            seed, result.structureId, nearest, pieces.size(), heightSpread, waterFraction, runtimeMillis
+            "seed {}: village {} at {} -- {} pieces, height spread {}, water fraction {}, tier {} ({} ms)",
+            seed, result.structureId, nearest, pieces.size(), heightSpread, waterFraction, tier, runtimeMillis
         );
         return result;
     }

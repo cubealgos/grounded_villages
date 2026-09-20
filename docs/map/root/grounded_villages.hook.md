@@ -50,6 +50,11 @@ A pre-placement ground sampler, wrapping exactly the ChunkGenerator column queri
 - `int getSeaLevel()`
 - `TerrainSampler of(ChunkGenerator chunkGenerator, RandomState randomState, LevelHeightAccessor heightAccessor)`
 
+### `class TierAssignmentRegistry` — `src/main/java/grounded_villages/hook/TierAssignmentRegistry.java`
+The "static last-assignment map keyed by start chunk" GV-8's own ticket names as the way for the seed-sweep harness (grounded_villages.harness) to read the tier a village actually rolled, since the harness only ever sees the finished world, not the mixin call that rolled it.
+- `void record(ChunkPos startChunk, TierAssignment assignment)`
+- `TierAssignment get(ChunkPos startChunk)` — null when no roll was ever recorded for startChunk (tiers disabled, the structure was not village-tagged, or the entry has since been evicted).
+
 ### `interface VillagePieceHook` — `src/main/java/grounded_villages/hook/VillagePieceHook.java`
 Called as vanilla's own jigsaw assembly proposes a piece, from the JigsawPlacement$Placer.tryPlacingChildren mixin (grounded_villages.mixin.village.PlacerMixin), gated on the structure carrying #minecraft:village (decisions/DEC-007-village-tag-scope.md).
 - `PieceDecision onChild(PoolElementStructurePiece pieceCandidate, BoundingBox boundingBox, TerrainSampler groundSampler)`

@@ -5,6 +5,11 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class TierAssignmentContext` — `src/main/java/grounded_villages/mixinsupport/TierAssignmentContext.java`
+Bridges the tier roll JigsawStructureMixin makes once per village candidate (GV-8, `docs/spec/domains/tiers.md`) to JigsawPlacementMixin's write-back of maxDepth/ max_distance_from_center one call frame down -- the same cross-mixin-class handoff shape VillageTagContext already uses for the #minecraft:village tag gate, and for the same reason: Structure.GenerationContext's own fields carry no reference back to the tier roll made against it (`VillageTagContext`'s own javadoc explains the underlying javap finding this mirrors).
+- `void set(TierAssignment assignment)`
+- `TierAssignment get()` — null when no roll happened for this thread's current structure call.
+
 ### `class VillageTagContext` — `src/main/java/grounded_villages/mixinsupport/VillageTagContext.java`
 Bridges JigsawStructureMixin's #minecraft:village tag test (run once per JigsawStructure.findGenerationPoint call -- the only place in the vanilla call chain with a this to test against the structure registry, decisions DEC-007-village-tag-scope.md) to JigsawPlacementMixin and PlacerMixin, both static methods one level down whose own parameters carry no structure reference back to the Structure/Holder that owns them (Structure.GenerationContext's record fields, confirmed by javap, GV-5).
 - `void set(boolean isVillage)`

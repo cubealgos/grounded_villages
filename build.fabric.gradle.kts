@@ -262,4 +262,83 @@ if (sc.current.project == "26.2-fabric") {
             }
         }
     }
+
+    // GV-8's own game test (ticket build item 3: "a game test on 26.2-fabric that a fixed seed
+    // yields a fixed tier"). No GameTest-framework task exists anywhere in this project yet (see
+    // this file's own seedSweep/harnessStatsTest comments, and docs/baseline/README.md "The
+    // verdict: datagen-shaped, rejected" -- GV-10 already spiked and rejected the heavier
+    // in-process bootstrap a full net.minecraft.gametest.framework integration would need); this
+    // reuses GV-10's own proven live-server-per-seed mechanism instead of adding a second, parallel
+    // headless-verification story, and proves the same property a GameTest would: real, live
+    // world generation, exercising the actual mixin/tier-roll code path end to end, not a unit
+    // test of TierRoller alone. Not wired into `check` -- like seedSweep, it boots a real
+    // dedicated server (twice, here), too slow for the fast local/CI loop `just check` promises;
+    // run explicitly (`./gradlew :26.2-fabric:tierGameTest`).
+    tasks.register("tierGameTest") {
+        group = "verification"
+        description = "GV-8: proves a fixed seed rolls a fixed tier -- runs the dedicated server " +
+            "twice against the same seed and diffs the tier field. `-Pseed=N` (default: the " +
+            "first seed in docs/baseline/seeds.txt)."
+
+        doLast {
+            val fixedSeeds = rootProject.file("docs/baseline/seeds.txt")
+                .readLines()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() && !it.startsWith("#") }
+            val seed = (project.findProperty("seed") as String?) ?: fixedSeeds.first()
+
+            val outDir = layout.buildDirectory.dir("tiergametest").get().asFile
+            outDir.mkdirs()
+
+            val tierPattern = Regex("\"tier\"\\s*:\\s*(null|\"([^\"]*)\")")
+
+            val tiers = (1..2).map { run ->
+                val runDir = "build/tiergametest/run-$run"
+                val outputFile = File(outDir, "run-$run.json")
+                // A fresh free port per run, same reasoning as seedSweep's own above.
+                val port = ServerSocket(0).use { it.localPort }
+                logger.lifecycle("[tierGameTest] seed $seed, run $run/2 -> ${outputFile.path}")
+
+                val process = ProcessBuilder(
+                    "${rootProject.projectDir}/gradlew",
+                    ":26.2-fabric:runServer",
+                    "-Pgroundedvillages.seed=$seed",
+                    "-Pgroundedvillages.output=${outputFile.absolutePath}",
+                    "-Pgroundedvillages.runDir=$runDir",
+                    "-Pgroundedvillages.port=$port",
+                    "--console=plain"
+                ).directory(rootProject.projectDir).inheritIO().start()
+                val exitCode = process.waitFor()
+                if (exitCode != 0 || !outputFile.exists()) {
+                    throw GradleException(
+                        "tierGameTest: run $run failed (gradlew exit $exitCode, " +
+                            "output written=${outputFile.exists()})"
+                    )
+                }
+
+                val json = outputFile.readText()
+                val match = tierPattern.find(json)
+                    ?: throw GradleException("tierGameTest: run $run's output has no \"tier\" field: $json")
+                match.groupValues[2].ifEmpty { null }
+            }
+
+            val first = tiers[0]
+            val second = tiers[1]
+            if (first == null || second == null) {
+                throw GradleException(
+                    "tierGameTest: seed $seed produced a null tier (tier.enabled=false, or no " +
+                        "village found near spawn) -- both runs must roll a real tier to prove " +
+                        "anything"
+                )
+            }
+            if (first != second) {
+                throw GradleException(
+                    "tierGameTest: seed $seed rolled different tiers across two runs: " +
+                        "'$first' vs '$second' -- TIER-REQ-001 (same seed + position -> same " +
+                        "tier) is broken"
+                )
+            }
+            logger.lifecycle("[tierGameTest] seed $seed -> tier '$first' (fixed across 2 runs)")
+        }
+    }
 }

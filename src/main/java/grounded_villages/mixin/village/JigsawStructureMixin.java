@@ -1,7 +1,13 @@
 package grounded_villages.mixin.village;
 
+import grounded_villages.config.ConfigHolder;
+import grounded_villages.config.ConfigModel;
 import grounded_villages.hook.HookDebug;
+import grounded_villages.hook.TierAssignmentRegistry;
+import grounded_villages.mixinsupport.TierAssignmentContext;
 import grounded_villages.mixinsupport.VillageTagContext;
+import grounded_villages.tier.TierAssignment;
+import grounded_villages.tier.TierRoller;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.StructureTags;
@@ -36,6 +42,17 @@ import java.util.Optional;
  * renamed {@code lookupOrThrow} in 26.2 (confirmed by {@code javap} against the 26.2 jar, GV-5 --
  * not named in {@code contracts/platform-matrix.md}'s version-delta table, which only tracks
  * {@code JigsawPlacement}/{@code Placer} signatures, not this call).
+ *
+ * <p><b>GV-8 also rolls the tier here</b> (`docs/spec/domains/tiers.md`), not inside {@code
+ * JigsawPlacementMixin}: this is the one place in the vanilla call chain with a {@code this} to
+ * gate on the village tag at all, and {@code Structure.GenerationContext} (the same record object
+ * {@code findGenerationPoint} hands straight through to {@code JigsawPlacement.addPieces}, per
+ * this class's own bytecode read) already carries {@code random()} -- the seeded {@code
+ * WorldgenRandom} {@code TIER-REQ-001} rolls from -- so no new context needs threading in. Rolling
+ * here, once, keeps the random draw single and ordering-independent: {@link
+ * TierAssignmentContext} is set before {@code JigsawPlacementMixin}'s write-back methods ever run,
+ * since {@code findGenerationPoint} calls {@code addPieces} itself (this method's javadoc above),
+ * never the other way around.
  */
 @Mixin(JigsawStructure.class)
 abstract class JigsawStructureMixin {
@@ -50,5 +67,31 @@ abstract class JigsawStructureMixin {
         boolean isVillage = structures.wrapAsHolder((Structure) (Object) this).is(StructureTags.VILLAGE);
         VillageTagContext.set(isVillage);
         HookDebug.fired("JigsawStructureMixin#findGenerationPoint", isVillage ? "village-tagged" : "not village-tagged");
+
+        gv$rollTier(context, isVillage);
+    }
+
+    /**
+     * GV-8: rolls the tier once per village candidate, before {@code addPieces} runs -- see this
+     * class's own javadoc "GV-8 also rolls the tier here". Skips the random draw entirely rather
+     * than rolling and discarding it when {@code tier.enabled} is {@code false}, so a server
+     * running with tiers off never perturbs vanilla's own subsequent piece-selection draws for no
+     * reason (`docs/spec/domains/config.md` {@code tier.enabled}: "matching pre-mod behaviour").
+     */
+    private static void gv$rollTier(Structure.GenerationContext context, boolean isVillage) {
+        if (!isVillage) {
+            TierAssignmentContext.set(null);
+            return;
+        }
+        ConfigModel.Tier tierConfig = ConfigHolder.get().tier();
+        if (!tierConfig.enabled()) {
+            TierAssignmentContext.set(null);
+            return;
+        }
+        double draw = context.random().nextDouble();
+        TierAssignment assignment = TierRoller.roll(tierConfig, draw);
+        TierAssignmentContext.set(assignment);
+        TierAssignmentRegistry.record(context.chunkPos(), assignment);
+        HookDebug.fired("TierRoller", assignment);
     }
 }
