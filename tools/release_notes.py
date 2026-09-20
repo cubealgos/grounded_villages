@@ -17,6 +17,8 @@ import re
 import sys
 from pathlib import Path
 
+from jar_naming import jar_file_name
+
 
 def section(changelog: str, version: str) -> str:
     match = re.search(rf"^## \[?{re.escape(version)}\]?.*?$(.*?)(?=^## |\Z)", changelog, re.M | re.S)
@@ -29,7 +31,7 @@ def main() -> None:
     if len(sys.argv) != 3:
         raise SystemExit("usage: release_notes.py <mc>-<loader> <version>")
     target, version = sys.argv[1], sys.argv[2]
-    jar_name = f"grounded_villages-{target}-{version}.jar"
+    jar_name = jar_file_name(target, version)
     body = section(Path("CHANGELOG.md").read_text(), version)
     checksum_path = Path(f"dist/{jar_name}.sha256")
     checksum = checksum_path.read_text().split()[0] if checksum_path.exists() else "<not built yet>"

@@ -19,7 +19,11 @@ floors, extended to every pinned coordinate, not only the JDK majors.
 Also checks `docs/modrinth/targets.json` (GV-19: the Modrinth publish tool's --targets file, one
 entry per jar) against `settings.gradle.kts`'s own Stonecutter `match()` nodes -- read from the
 build script, never hardcoded to a count, so a node a later ticket adds (GV-17: six more nodes)
-cannot be silently forgotten in the publish targets.
+cannot be silently forgotten in the publish targets. GV-24: each target's own `jar` field is also
+checked against `tools/jar_naming.py`'s derivation of the same expression the build files apply
+(`buildSrc/src/main/kotlin/GvJarNaming.kt`), fed by `stonecutter.properties.toml`'s own top-level
+`mod.id`/`mod.version` -- drift here (the bug GV-24 itself found: the build wrote a different jar
+name than the release tooling expected) is reported by node, never by building.
 
 Read-only: reports, changes nothing. Exit 0 when every check passes, 5 when a toolchain or
 coordinate is absent or below/unequal to its pin, 6 when docs/spec/ differs from the vault copy
@@ -37,6 +41,8 @@ import subprocess
 import sys
 import tomllib
 from pathlib import Path
+
+from jar_naming import jar_path
 
 TOOL_DIR = Path(__file__).resolve().parent
 
@@ -243,6 +249,51 @@ def check_targets(root: Path) -> tuple[bool, str]:
     return True, f"targets: docs/modrinth/targets.json covers all {len(settings_nodes)} Stonecutter node(s)"
 
 
+def check_target_jars(root: Path) -> list[tuple[bool, str]]:
+    """GV-24: each `docs/modrinth/targets.json` entry's own `jar` field must match the same
+    `grounded_villages-<mc>-<loader>-<version>.jar` expression (`tools/jar_naming.py`, the Python
+    twin of `buildSrc/src/main/kotlin/GvJarNaming.kt`'s `gvJarFileName`, which every
+    `build.<loader>.gradle.kts` and its own `buildAndCollect` apply) -- derived from
+    `stonecutter.properties.toml`'s own top-level `mod.id`/`mod.version`, never by running
+    `chiseledBuild`, so this check stays in the same read-only, no-Gradle budget as every other
+    doctor check. One row per target, "fails naming the row" like every other check here, so a
+    single drifted node (a real Wave release bumping `mod.version` without regenerating
+    `targets.json`, this ticket's own found bug) is reported by name rather than as one opaque
+    failure."""
+    props = root / "stonecutter.properties.toml"
+    if not props.exists():
+        return [(False, "target jars: stonecutter.properties.toml missing")]
+    try:
+        doc = tomllib.loads(props.read_text())
+    except tomllib.TOMLDecodeError as exc:
+        return [(False, f"target jars: stonecutter.properties.toml did not parse ({exc})")]
+    mod_id, mod_version = dig(doc, ("mod", "id")), dig(doc, ("mod", "version"))
+    if not isinstance(mod_id, str) or not isinstance(mod_version, str):
+        return [(False, "target jars: mod.id/mod.version missing from stonecutter.properties.toml")]
+
+    targets_path = root / "docs" / "modrinth" / "targets.json"
+    if not targets_path.exists():
+        return [(False, f"target jars: {targets_path} missing")]
+    try:
+        targets_doc = json.loads(targets_path.read_text())
+    except json.JSONDecodeError as exc:
+        return [(False, f"target jars: {targets_path} did not parse ({exc})")]
+    targets = targets_doc if isinstance(targets_doc, list) else targets_doc.get("targets") if isinstance(targets_doc, dict) else None
+    if not isinstance(targets, list):
+        return [(False, f"target jars: {targets_path} has no targets list")]
+
+    results: list[tuple[bool, str]] = []
+    for t in targets:
+        if not isinstance(t, dict) or "node" not in t:
+            continue  # check_targets above already reports a nodeless entry
+        node = t["node"]
+        expected = jar_path(node, mod_version, mod_id)
+        found = t.get("jar")
+        ok = found == expected
+        results.append((ok, f"target jar ({node}): {found!r}; expected {expected!r}"))
+    return results
+
+
 def dig(doc: dict, path: tuple[str, ...]):
     node = doc
     for key in path:
@@ -338,6 +389,7 @@ def main(argv: list[str] | None = None) -> int:
         check_targets(root),
     ]
     results += check_coordinates(root)
+    results += check_target_jars(root)
 
     code = 0
     for ok, message in results:
