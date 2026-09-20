@@ -67,10 +67,10 @@ server node:
 spec-sync:
     rsync -a --delete "{{vault_spec}}/" docs/spec/
 
-# Render the Modrinth icon (GV-23): the village bell, reconstructed from BellModel's own cuboids
-# and rendered on the cubealgos navy badge at the siblings' tilt. Reads the bell's entity texture
-# from a local Minecraft client jar found by globbing the Gradle cache; pass --jar PATH via
-# tools/icon.py directly to override.
+# Render the Modrinth icon (GV-23): vanilla's own flat village bell item sprite, on the cubealgos
+# navy badge, the way create_villager_customers composes the vanilla emerald. Reads it from a
+# local Minecraft client jar found by globbing the Gradle cache; pass --jar PATH, or --pick to
+# write one of the other rendered candidates instead, via tools/icon.py directly.
 icon:
     python3 tools/icon.py
 

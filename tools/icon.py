@@ -37,6 +37,21 @@ A second candidate sits the bell on a small slab of vanilla's dirt path (`dirt_p
 siblings' isometric tilt (create_metered_motor's `[30, 315, -45]`, scale 0.625); the bell alone is
 also rendered at vanilla's own default GUI tilt (`[30, 225, 0]`) as a second angle to compare.
 
+Two more candidates, added after the first render read as a gold box rather than a bell at icon
+scale (the bytecode-derived UV mapping is correct -- verified pixel-for-pixel against
+`bell_body.png`'s own content boundaries, and the raw high-resolution projection does show the
+band shading and the base flare -- but the flare is only 2 of the shape's 9 units tall, and vanilla's
+own shading contrast on this texture is subtle, so both get lost once the render is composed onto
+the badge and shrunk):
+
+- `flat-sprite`: the flat, pre-baked `textures/item/bell.png` (the actual GUI icon, unmistakably
+  bell-shaped with a visible hanger and flare) composed exactly the way create_villager_customers'
+  `tools/icon.py` composes the vanilla emerald -- cropped to its alpha bounding box, scaled
+  without smoothing to the same 320px fit box, with the same white outline and soft shadow.
+- `bell-with-frame`: the same bytecode-derived bell cuboids, plus the real wooden post-and-bar
+  frame the bell hangs from, loaded straight from `bell_floor.json`'s own three elements (so it
+  is composed, not re-derived) -- context that reads as "a hanging bell" rather than a loose block.
+
 Ports the projection and badge code inline from the heimathafen prototypes
 (standards/marketing/modrinth/block-model-render.py and .../navy-badge.py), the way
 create_metered_motor's tools/icon.py does, so this repo never imports from heimathafen at build
@@ -50,6 +65,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import zipfile
 from pathlib import Path
@@ -64,8 +80,12 @@ PRIMARY_GLOB = GRADLE_CACHE / "minecraftMaven" / "net" / "minecraft" / "minecraf
 FALLBACK_ROOT = GRADLE_CACHE / "26.2"
 
 BELL_BODY_TEXTURE = "assets/minecraft/textures/entity/bell/bell_body.png"
+BELL_ITEM_SPRITE = "assets/minecraft/textures/item/bell.png"
+BELL_FLOOR_MODEL = "assets/minecraft/models/block/bell_floor.json"
 DIRT_PATH_TOP = "assets/minecraft/textures/block/dirt_path_top.png"
 DIRT_PATH_SIDE = "assets/minecraft/textures/block/dirt_path_side.png"
+DARK_OAK_PLANKS = "assets/minecraft/textures/block/dark_oak_planks.png"
+STONE = "assets/minecraft/textures/block/stone.png"
 
 SIBLINGS_TILT = {"rotation": [30, 315, -45], "scale": [0.625, 0.625, 0.625]}
 VANILLA_TILT = {"rotation": [30, 225, 0], "scale": [0.625, 0.625, 0.625]}
@@ -125,6 +145,16 @@ def ground_slab_element() -> dict:
     element["faces"]["up"]["texture"] = "#ground_top"
     element["faces"]["down"]["texture"] = "#ground_top"
     return element
+
+
+def frame_elements(jar: Path) -> list[dict]:
+    """The real wooden post-and-bar frame the bell hangs from, loaded verbatim from vanilla's own
+    `bell_floor.json` -- composed here, not re-derived, since (unlike the bell body) this
+    geometry already exists as an ordinary block model with its own from/to/uv/texture per
+    element. Texture keys stay "#bar"/"#post" as the model names them."""
+    with zipfile.ZipFile(jar) as zf:
+        model = json.loads(zf.read(BELL_FLOOR_MODEL))
+    return model["elements"]
 
 
 # ============================================================== 3D projection
@@ -395,6 +425,35 @@ def compose(base: Image.Image, sprite: Image.Image, box: int = FIT_BOX) -> Image
     return img
 
 
+def compose_pixelart(base: Image.Image, raw: Image.Image, box: int = FIT_BOX) -> Image.Image:
+    """"pixelart" mode: sprite is a raw texture crop (the bell's flat item icon), so it is
+    zoomed with nearest-neighbour to keep texels crisp, the way create_villager_customers'
+    tools/icon.py composes the vanilla emerald -- ported here rather than re-imported so this
+    repo never depends on heimathafen or a sibling repo at build time."""
+    w, h = raw.size
+    longest = max(w, h)
+    factor = max(1, box // longest)
+    size = (w * factor, h * factor)
+    sprite = raw.resize(size, Image.NEAREST)
+    alpha = sprite.getchannel("A")
+    x = BADGE_CENTRE - size[0] // 2
+    y = BADGE_CENTRE - size[1] // 2
+    step = factor
+    grown = Image.new("L", (BADGE_SIZE, BADGE_SIZE), 0)
+    for dx in (-step, 0, step):
+        for dy in (-step, 0, step):
+            grown.paste(alpha, (x + dx, y + dy), alpha)
+    shadow = Image.new("RGBA", (BADGE_SIZE, BADGE_SIZE), (0, 0, 0, 0))
+    shadow.paste(SHADOW, (0, 0), grown.transform(grown.size, Image.AFFINE, (1, 0, -14, 0, 1, -14)))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(10))
+    outline = Image.new("RGBA", (BADGE_SIZE, BADGE_SIZE), (0, 0, 0, 0))
+    outline.paste(OUTLINE, (0, 0), grown)
+    img = Image.alpha_composite(base, shadow)
+    img = Image.alpha_composite(img, outline)
+    img.alpha_composite(sprite, (x, y))
+    return img
+
+
 # ============================================================== jar / texture resolution
 
 def jar_has_entry(jar: Path, entry: str) -> bool:
@@ -429,7 +488,17 @@ def load_texture(jar: Path, entry: str) -> Image.Image:
             return Image.open(fh).convert("RGBA").copy()
 
 
+def load_cropped_sprite(jar: Path, entry: str) -> Image.Image:
+    """As create_villager_customers' tools/icon.py reads the emerald: cropped to its alpha
+    bounding box, so the badge's fit box measures the actual drawn pixels, not the sprite's
+    (often padded) canvas."""
+    raw = load_texture(jar, entry)
+    return raw.crop(raw.getbbox())
+
+
 # ============================================================== candidates
+# Each candidate is (sprite_image, compose_mode): "smooth" for the already-anti-aliased 3D
+# projections, "pixelart" for the raw flat item texture (create_villager_customers' approach).
 
 def render_bell(textures: dict, gui: dict) -> Image.Image:
     model = {"elements": bell_elements()}
@@ -441,16 +510,29 @@ def render_bell_on_slab(textures: dict, gui: dict) -> Image.Image:
     return render_model(model, textures, gui)
 
 
+def render_bell_with_frame(textures: dict, gui: dict, jar: Path) -> Image.Image:
+    model = {"elements": bell_elements() + frame_elements(jar)}
+    return render_model(model, textures, gui)
+
+
 def build_candidates(jar: Path) -> dict:
     bell_tex = load_texture(jar, BELL_BODY_TEXTURE)
     ground_top = load_texture(jar, DIRT_PATH_TOP)
     ground_side = load_texture(jar, DIRT_PATH_SIDE)
-    textures = {"body": bell_tex, "ground_top": ground_top, "ground_side": ground_side}
+    bar_tex = load_texture(jar, DARK_OAK_PLANKS)
+    post_tex = load_texture(jar, STONE)
+    textures = {
+        "body": bell_tex, "ground_top": ground_top, "ground_side": ground_side,
+        "bar": bar_tex, "post": post_tex,
+    }
+    flat_sprite = load_cropped_sprite(jar, BELL_ITEM_SPRITE)
 
     return {
-        "bell-siblings-tilt": render_bell(textures, SIBLINGS_TILT),
-        "bell-vanilla-tilt": render_bell(textures, VANILLA_TILT),
-        "bell-on-slab": render_bell_on_slab(textures, SIBLINGS_TILT),
+        "bell-siblings-tilt": (render_bell(textures, SIBLINGS_TILT), "smooth"),
+        "bell-vanilla-tilt": (render_bell(textures, VANILLA_TILT), "smooth"),
+        "bell-on-slab": (render_bell_on_slab(textures, SIBLINGS_TILT), "smooth"),
+        "bell-with-frame": (render_bell_with_frame(textures, SIBLINGS_TILT, jar), "smooth"),
+        "flat-sprite": (flat_sprite, "pixelart"),
     }
 
 
@@ -478,11 +560,17 @@ SIBLING_ICONS = [
 ]
 
 
+def compose_candidate(sprite: Image.Image, mode: str) -> Image.Image:
+    if mode == "pixelart":
+        return compose_pixelart(badge(), sprite)
+    return compose(badge(), sprite)
+
+
 def write_sheet(candidates: dict, path: Path) -> None:
     """A contact sheet: each candidate badge (and each existing sibling icon, for consistency)
     shown at 512px and at 64px, so the icon can be judged the way Modrinth actually shows it."""
     labels = list(candidates.keys())
-    badges = [compose(badge(), candidates[k]) for k in labels]
+    badges = [compose_candidate(sprite, mode) for sprite, mode in candidates.values()]
     sibling_labels = []
     for sib in SIBLING_ICONS:
         if sib.exists():
@@ -511,8 +599,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--jar", type=Path, default=None, help="Minecraft client jar to read the bell's assets from")
     parser.add_argument("--sheet", type=Path, default=None, help="also write a candidates contact sheet to this path")
-    parser.add_argument("--pick", default="bell-siblings-tilt",
-                         choices=["bell-siblings-tilt", "bell-vanilla-tilt", "bell-on-slab"],
+    parser.add_argument("--pick", default="flat-sprite",
+                         choices=["bell-siblings-tilt", "bell-vanilla-tilt", "bell-on-slab",
+                                  "bell-with-frame", "flat-sprite"],
                          help="which candidate to write as docs/modrinth/icon.png")
     args = parser.parse_args()
 
@@ -522,7 +611,8 @@ def main() -> None:
     if args.sheet:
         write_sheet(candidates, args.sheet)
 
-    icon = compose(badge(), candidates[args.pick])
+    sprite, mode = candidates[args.pick]
+    icon = compose_candidate(sprite, mode)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     icon.save(OUT, optimize=True)
     print(f"wrote {OUT} ({OUT.stat().st_size} bytes) from {jar}, candidate {args.pick!r}")
