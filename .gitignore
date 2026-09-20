@@ -8,6 +8,8 @@
 .gradle/
 build/
 run/
+run-gametest-fabric/
+run-gametest-neoforge/
 logs/
 .idea/
 *.iml

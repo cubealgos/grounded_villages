@@ -121,3 +121,50 @@ tasks {
         into(rootProject.layout.buildDirectory.file("libs/${project.property("mod.version")}"))
     }
 }
+
+// GV-11: per-loader game tests, on 1.21.1-neoforge only -- NOT 26.2-neoforge. 26.2 shipped a full
+// rewrite of vanilla's own game-test framework (net.minecraft.gametest.framework, confirmed by
+// direct javap read of the 26.2 merged-deobf jar this ticket) that drops the classic
+// @GameTest/@GameTestHolder/RegisterGameTestsEvent.register(Class) API this file wires below in
+// favour of a registry-driven GameTestInstance/TestData/TestFunctionLoader model; NeoForge
+// 26.2.0.88's own RegisterGameTestsEvent was rewritten to match (confirmed: no GameTestHolder
+// class and no register(Class)/register(Method) overload anywhere in
+// neoforge-26.2.0.88-universal.jar, unlike neoforge-21.1.251-universal.jar, which still carries
+// both) with no annotation-scanning bridge shipped -- unlike Fabric API's own
+// fabric-gametest-api-v1 module, which does bridge the same rewrite transparently on 26.2-fabric
+// (grounded_villages.fabric.gametest, wired only there -- see build.fabric.gradle.kts's own
+// comment: the same v1.GameTest annotation class is itself a newer addition, absent from the
+// module versions 1.20.1/1.21.1's own fabric-api pins resolve). Hand-rolling a
+// FunctionGameTestInstance against 26.2-neoforge's new, sparsely-documented registry blind was
+// judged too high-risk for this ticket's own scope and time box.
+// 1.21.1-neoforge is itself a live node on this mod's own platform matrix
+// (contracts/platform-matrix.md), not a version this mod drops -- this is real coverage on a real
+// shipped combination, not a downgrade to satisfy the letter of "NeoForge" alone.
+// 26.2-neoforge coverage is deferred, flagged here for whichever ticket next touches NeoForge's
+// game-test wiring, rather than shipped unverified.
+if (sc.current.project == "1.21.1-neoforge") {
+    sourceSets.main {
+        // The loader-agnostic scenario bodies (grounded_villages.gametest, shared with every
+        // Fabric node) plus this node's own @GameTest/@GameTestHolder/RegisterGameTestsEvent
+        // wiring (grounded_villages.neoforge.gametest) -- kept out of the always-compiled
+        // src/neoforge/java tree so 26.2-neoforge never sees either.
+        java.srcDir(rootProject.file("src/gametest/java"))
+        java.srcDir(rootProject.file("src/neoforgegametest/java"))
+    }
+
+    neoForge.runs.register("gameTestServer") {
+        // MDG's own userdev runType key (confirmed present in neoforge-21.1.251's own
+        // config.json: main class net.neoforged.fml.startup.GameTestServer,
+        // neoforge.enableGameTest=true) -- generates the runGameTestServer task this ticket wires
+        // into just gametest below, matching the sibling Fabric runGameTest task's own shape.
+        type = "gameTestServer"
+        // A dedicated directory, not the shared "run" the client/server runs above and a
+        // person's own `just client`/`just server` session use -- confirmed live: running this
+        // alongside `:26.2-fabric:runGameTest` (itself defaulting to "run" too,
+        // build.fabric.gradle.kts's own `runConfigs.all`) under Gradle's own parallel execution
+        // (`org.gradle.parallel=true`, gradle.properties) crashed with a
+        // `DirectoryLock$LockException` on "run/world/session.lock", both trying to open the same
+        // save at once.
+        gameDirectory = rootProject.file("run-gametest-neoforge")
+    }
+}
