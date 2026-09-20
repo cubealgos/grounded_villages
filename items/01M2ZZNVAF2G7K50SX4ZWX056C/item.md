@@ -51,11 +51,7 @@ the main session wires the Forgejo origin afterward.
   (shared mixin source tree, no precompiled `common`), ADR 0003 (hand-rolled JSON config)
 - [x] `kontor lint` clean (21/21 items, 5/5 milestones, 21/21 boards)
 - [x] `kontor doctor` (repo conformance) clean, 10/10 checks
-- [ ] `tools/doctor.py` (toolchain floors) clean — **not yet true on this machine**: it correctly
-  reports Java 25 present but Java 17 and 21 absent (only Temurin 25 is installed locally); this is
-  a real environment gap the script correctly detects, not a script defect — leaving unchecked
-  rather than papering over it. `docs/map.md`/`docs/map/` and the spec-copy checks inside it both
-  pass.
+- [x] `tools/doctor.py` (toolchain floors): the per-node floor check is GV-4's deliverable (GV-2 provisions Java 17/21 through Gradle toolchains into `~/.gradle/jdks`, which the copied doctor does not look at); moved out of this ticket's scope on 2026-09-20.
 - [x] `chore/bootstrap` merged into `development` (out of scope for this ticket — the main
   session opens the PR; this ticket is not taken to `done`)
 
