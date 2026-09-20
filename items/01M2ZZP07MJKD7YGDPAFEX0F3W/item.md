@@ -27,12 +27,12 @@ compilation means the nodes are independent.
 
 ## Acceptance criteria
 
-- [ ] `.woodpecker.yml` runs `.ci/install-tools.sh` then `just check` on push/PR/manual, matching
+- [x] `.woodpecker.yml` runs `.ci/install-tools.sh` then `just check` on push/PR/manual, matching
   the sibling's trigger shape
-- [ ] `chiseledCheck` is registered and actually invoked by `just check` (not just `chiseledBuild`)
-- [ ] CI is green on a trivial diff against the six-node skeleton from GV-2
-- [ ] the JDK floor(s) in the CI image match every row's toolchain in `contracts/platform-matrix.md`
-- [ ] `PLATFORM-REQ-004`: a red job for one combination does not block another combination's own
+- [x] `chiseledCheck` is registered and actually invoked by `just check` (not just `chiseledBuild`)
+- [x] CI is green on a trivial diff against the six-node skeleton from GV-2
+- [x] the JDK floor(s) in the CI image match every row's toolchain in `contracts/platform-matrix.md`
+- [x] `PLATFORM-REQ-004`: a red job for one combination does not block another combination's own
   publish path (structural — no cross-node dependency in the pipeline)
 
 ## Constraints and prior findings
