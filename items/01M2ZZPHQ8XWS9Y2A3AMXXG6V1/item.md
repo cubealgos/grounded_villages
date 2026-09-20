@@ -21,7 +21,7 @@ Wave 2 proceeds, per this fleet's epic convention (grouping only, via `child_of`
 
 ## Acceptance criteria
 
-- [ ] every child ticket of this epic reaches `done`
+- [x] every child ticket of this epic reaches `done`
 
 ## Constraints and prior findings
 
