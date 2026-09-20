@@ -27,17 +27,17 @@ sampling reuses that context rather than threading in anything new.
 
 ## Acceptance criteria
 
-- [ ] mixin compiles and fires on all six nodes (GV-15/GV-17 extend this to the Forge and Wave 3
+- [x] mixin compiles and fires on all six nodes (GV-15/GV-17 extend this to the Forge and Wave 3
   legs once those exist; this ticket covers the Wave 1 four nodes plus proves the shape for the
   rest)
-- [ ] the `#minecraft:village` tag gate is confirmed live: a non-village jigsaw structure (a
+- [x] the `#minecraft:village` tag gate is confirmed live: a non-village jigsaw structure (a
   pillager outpost, say) is provably untouched
-- [ ] `PIECE-FAIL-002` (a rejected piece's dangling jigsaw connector) is verified, not just assumed
+- [x] `PIECE-FAIL-002` (a rejected piece's dangling jigsaw connector) is verified, not just assumed
   — either a targeted trace of `tryPlacingChildren`'s failure path, or an empirical game-test check
   confirming vanilla's own "try the next pool entry, or leave the branch unconnected" path holds
-- [ ] `DEC-005`/`beard_thin` verification: confirm `TerrainAdjustment.BEARD_THIN` is left running
+- [x] `DEC-005`/`beard_thin` verification: confirm `TerrainAdjustment.BEARD_THIN` is left running
   exactly as vanilla ships it, and this mod adds no terrain edit of its own around a placed piece
-- [ ] the hook reads `ChunkGenerator`/`RandomState` already in scope at the injection point — no
+- [x] the hook reads `ChunkGenerator`/`RandomState` already in scope at the injection point — no
   new context is threaded in
 
 ## Constraints and prior findings
