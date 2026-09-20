@@ -43,6 +43,12 @@ test-tools:
 gametest:
     ./gradlew chiseledCheck --continue
 
+# GV-10: sweep N seeds for the first village near spawn (height spread, water fraction, piece
+# count), 26.2-fabric only. Fixed, checked-in seed list (docs/baseline/seeds.txt, TEST-REQ-003);
+# pass a literal seed list instead with `./gradlew :26.2-fabric:seedSweep -Pseeds=1,2,3`.
+sweep count="10":
+    ./gradlew :26.2-fabric:seedSweep -Pcount={{count}}
+
 # One version node's client, e.g. `just client 1.21.1-fabric`.
 client node:
     ./gradlew :{{node}}:runClient

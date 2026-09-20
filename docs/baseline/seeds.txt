@@ -1,0 +1,28 @@
+# GV-10 TEST-REQ-003: fixed, checked-in seed list for the seed-sweep harness
+# (docs/spec/operations/testing.md). `just sweep <N>` / `./gradlew :26.2-fabric:seedSweep
+# -Pcount=<N>` takes the first N seeds below, so every count-bounded run is reproducible release
+# over release. `-Pseeds=1,2,3` overrides this list for ad hoc, non-reproducible exploration.
+#
+# Plain small integers, deliberately: any 64-bit long is a valid Minecraft world seed, and there is
+# no reason to prefer "random-looking" numbers over easy-to-recognise ones for a list whose whole
+# purpose is being the same list every time.
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
