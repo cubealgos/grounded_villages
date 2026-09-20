@@ -3,7 +3,7 @@ schema_version: 1
 id: 01M2ZZM1QRQ05MKN7ZQ4H9C9E6
 key: M1
 title: "Wave 1: Fabric + NeoForge on 1.21.1 and 26.2"
-status: todo
+status: done
 created_at: 2026-09-20T18:00:29Z
 ---
 

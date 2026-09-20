@@ -23,14 +23,14 @@ keeping every other sibling mod's own use of the same script unaffected.
 
 ## Acceptance criteria
 
-- [ ] `cmd_version` accepts per-invocation overrides for jar path, game-versions array, loader, and
+- [x] `cmd_version` accepts per-invocation overrides for jar path, game-versions array, loader, and
   version number, without needing six separate static body files
-- [ ] the existing `version_number`-already-exists collision check (lines 780-782 of the upstream
+- [x] the existing `version_number`-already-exists collision check (lines 780-782 of the upstream
   script, per the research) still applies per invocation
-- [ ] six separate invocations succeed for a full Wave 1-2 release, each uploading exactly one jar
-- [ ] artifact naming follows `grounded_villages-<mc>-<loader>-<version>.jar`
+- [x] six separate invocations succeed for a full Wave 1-2 release, each uploading exactly one jar
+- [x] artifact naming follows `grounded_villages-<mc>-<loader>-<version>.jar`
   (`REL-DEC-001`)
-- [ ] a `Game versions` array is only ever allowed to span more than one tag within the same
+- [x] a `Game versions` array is only ever allowed to span more than one tag within the same
   Java/toolchain generation — never across a Java-version boundary or a loader, enforced or at
   least checked by this tool
 
