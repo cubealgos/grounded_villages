@@ -20,8 +20,8 @@ Mod id `grounded_villages`. Independent of "Improved Village Placement" (credite
 | Fabric, the 1.21.x point releases with a current Fabric API and NeoForge release | 3 | planned |
 | NeoForge, the 1.21.x point releases with a current Fabric API and NeoForge release | 3 | planned |
 
-No code exists yet — this repository is at its bootstrap ticket (GV-1). See
-`docs/spec/contracts/platform-matrix.md` for the full toolchain per row.
+The Stonecutter skeleton (GV-2) builds all six nodes as empty jars; no rejection/tier/config
+logic exists yet. See `docs/spec/contracts/platform-matrix.md` for the full toolchain per row.
 
 ## Install
 

@@ -9,9 +9,23 @@ signature page before calling into a package you did not write.
 
 | project | source roots |
 |---|---|
+| `root` | `src/fabric/java`, `src/forge/java`, `src/neoforge/java` |
 
 | package | project | types | what |
 |---|---|---|---|
+| `grounded_villages.fabric` | root (fabric) | GroundedVillagesFabric |  |
+| `grounded_villages.forge` | root (forge) | GroundedVillagesForge |  |
+| `grounded_villages.neoforge` | root (neoforge) | GroundedVillagesNeoForge |  |
+
+| build script | what |
+|---|---|
+| `build.fabric.gradle.kts` | Fabric leg, shared by all three MC versions (1.20.1, 1.21.1, 26.2) -- one build script per // docs/spec/04-architecture.md "Shape". |
+| `build.forge.gradle.kts` | Forge leg, 1.20.1 only -- MDG's `legacyforge` addon, same plugin family as the NeoForge legs // rather than ForgeGradle (docs/spec/04-architecture.md ARCH-DEC-002, // decisions/DEC-004-versions-and-toolchain.md). |
+| `build.neoforge.gradle.kts` | NeoForge leg, shared by the 1.21.1 and 26.2 nodes -- one build script per // docs/spec/04-architecture.md "Shape". |
+| `buildSrc/build.gradle.kts` |  |
+| `buildSrc/src/main/kotlin/neoforge-mutex.gradle.kts` |  |
+| `settings.gradle.kts` | Six Stonecutter version nodes, one repository (docs/spec/04-architecture.md ARCH-DEC-002, // decisions/DEC-004-versions-and-toolchain.md): the version/loader axis is entirely Stonecutter's // own `match()` helper below, quoted from `stonecutter-template-multiloader`'s own // settings.gradle.kts (multi-loader-multi-version-mods-2026.md "Grounded Villages" §1) and // extended with the Forge 1.20.1 leg this mod's ladder adds beyond that template. |
+| `stonecutter.gradle.kts` | Root Stonecutter build script (docs/spec/04-architecture.md "Shape"). |
 
 | tool | what | entry points |
 |---|---|---|

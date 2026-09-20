@@ -1,0 +1,29 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+
+[[mods]]
+modId = "${id}"
+displayName = "${name}"
+version = "${version}"
+authors = "Kevin Scheeren"
+description = "Villages generate on one consistent ground level, dry, and in a genuine range of sizes. Placement only -- no terrain edits of this mod's own."
+
+# The [[mixins]] block declares the mixin config to FML so it gets loaded; the config itself
+# ships no mixins yet (GV-2 is skeleton only, PIECE/SITE domains land in their own tickets).
+[[mixins]]
+config = "grounded_villages.mixins.json"
+
+[[dependencies.${id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "[1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft}"
+ordering = "NONE"
+side = "BOTH"
