@@ -18,8 +18,8 @@ Decide the one scheme (the spec's, unless the loader plugins make it awkward: th
 
 ## Acceptance criteria
 
-- [ ] One jar-name scheme, in the spec, the build files, the release-notes tool and the targets file.
-- [ ] `just publish-dry` finds all jars after `chiseledBuild`; `tools/doctor.py` fails on drift; `just check` green; merged through a Forgejo pull request into `development`.
+- [x] One jar-name scheme, in the spec, the build files, the release-notes tool and the targets file.
+- [x] `just publish-dry` finds all jars after `chiseledBuild`; `tools/doctor.py` fails on drift; `just check` green; merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
