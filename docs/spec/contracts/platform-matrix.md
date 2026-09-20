@@ -15,22 +15,29 @@ category: "grounded_villages"
 | Fabric, 26.2 | planned | Wave 1 |
 | NeoForge, 26.2 | planned | Wave 1 |
 | Forge, 1.20.1 | planned | Wave 2 |
-| Fabric, the 1.21.x point releases with a Fabric API and NeoForge release | planned | Wave 3 |
-| NeoForge, the 1.21.x point releases with a Fabric API and NeoForge release | planned | Wave 3 |
+| Fabric, 1.21.4 | planned | Wave 3 |
+| NeoForge, 1.21.4 | planned | Wave 3 |
+| Fabric, 1.21.5 | planned | Wave 3 |
+| NeoForge, 1.21.5 | planned | Wave 3 |
+| Fabric, 1.21.8 | planned | Wave 3 |
+| NeoForge, 1.21.8 | planned | Wave 3 |
 
 Every row is `planned` — no code and no repository exist yet
 (`decisions/DEC-004-versions-and-toolchain.md`). Waves 1–2 (six nodes) are confirmed build targets
 per `multi-loader-multi-version-mods-2026.md`'s "Grounded Villages" section and
 `village-jigsaw-placement-1-20-1-to-26-2.md`, both added 2026-09-20 after this spec's first draft.
-**Wave 3 is intentionally unenumerated**: neither research note names a curated list of long-lived
-1.21.x point releases (the jigsaw note's own version-delta table only bisects a class-shape change to
-"between 1.21.2 and 1.21.9, not pinned" — an incidental mention, not a release-selection claim). Per
-the coordinator's ruling, Wave 3's exact members are **chosen at that wave's own ticket**, against
-whichever 1.21.x point releases have both a Fabric API and a NeoForge release at that time — not
-invented here. This is a decision rule, not a placeholder: it closes the question rather than leaving
-it open.
+**Wave 3 is now enumerated (GV-17, 2026-09-21)**: three 1.21.x point releases -- 1.21.4, 1.21.5,
+1.21.8 -- chosen live against Modrinth's own Fabric API release feed and `maven.neoforged.net`'s
+own NeoForge release feed, per the decision rule `decisions/DEC-004-versions-and-toolchain.md`
+already set (neither research note named a curated list; the jigsaw note's own version-delta table
+only bisected an unrelated class-shape change to "between 1.21.2 and 1.21.9, not pinned" -- an
+incidental mention, not a release-selection claim). See "Wave 3 nodes (GV-17)" below for the full
+live evidence and why the other candidates were not picked: 1.21.3, 1.21.10 and 1.21.11 each have
+both a Fabric API and a NeoForge release too, but lost out on spread/adoption grounds; 1.21.2,
+1.21.6, 1.21.7 and 1.21.9 have a Fabric API release but no NeoForge release at all, so none of the
+four ever qualified.
 
-## Per-row toolchain (confirmed for Waves 1–2; Wave 3 chosen at its own ticket)
+## Per-row toolchain (confirmed for Waves 1–3)
 
 | Row | Java | Build plugin(s) | Version pins |
 |---|---|---|---|
@@ -39,8 +46,12 @@ it open.
 | Fabric, 26.2 | 25 | `fabric-loom` `1.17-SNAPSHOT` | Fabric API `0.161.0+26.2` |
 | NeoForge, 26.2 | 25 | MDG `2.0.147` | NeoForge `26.2.0.88` |
 | Forge, 1.20.1 | **17** | MDG `2.0.147` + `legacyforge` addon | Forge `47.4.23` (verified GV-2, see below); compiled against Mojang mappings, runtime jar reobfuscated to SRG via Mixin's refmap step; Fabric API precedent for this MC generation is `0.92.12+1.20.1` (the Fabric leg's own pin, not Forge's) |
-| Fabric, 1.21.x (Wave 3) | 21 (every 1.21.x point shares Java 21, `≥1.20.5 → Java 21`) | `fabric-loom` `1.17-SNAPSHOT` | Chosen at the Wave 3 ticket, against whichever point release has a current Fabric API build |
-| NeoForge, 1.21.x (Wave 3) | 21 | MDG `2.0.147` | Chosen at the Wave 3 ticket, against whichever point release has a current NeoForge build |
+| Fabric, 1.21.4 (Wave 3, GV-17) | 21 | `fabric-loom` `1.17-SNAPSHOT` | Fabric API `0.119.4+1.21.4` |
+| NeoForge, 1.21.4 (Wave 3, GV-17) | 21 | MDG `2.0.147` | NeoForge `21.4.157` |
+| Fabric, 1.21.5 (Wave 3, GV-17) | 21 | `fabric-loom` `1.17-SNAPSHOT` | Fabric API `0.128.2+1.21.5` |
+| NeoForge, 1.21.5 (Wave 3, GV-17) | 21 | MDG `2.0.147` | NeoForge `21.5.98` |
+| Fabric, 1.21.8 (Wave 3, GV-17) | 21 | `fabric-loom` `1.17-SNAPSHOT` | Fabric API `0.136.1+1.21.8` |
+| NeoForge, 1.21.8 (Wave 3, GV-17) | 21 | MDG `2.0.147` | NeoForge `21.8.54` |
 
 Root Gradle `9.5.1` across every row; Stonecutter `dev.kikugie.stonecutter` `0.9.8`. Source is
 Mojang mappings everywhere (`decisions/DEC-004-versions-and-toolchain.md`).
@@ -197,6 +208,97 @@ ticket itself was scoped to close.
   API field GV-2 used successfully for `neoforged/NeoForge` is not reliable for this one repo; the
   file text is authoritative and was read directly instead.
 
+## Wave 3 nodes (GV-17, chosen and verified live 2026-09-21)
+
+**The two live feeds, read directly, not from either research note** (neither named a curated
+list -- `decisions/DEC-004-versions-and-toolchain.md`'s own decision rule required this ticket to
+check live):
+
+- **Fabric API**: `GET https://api.modrinth.com/v2/project/fabric-api/version` (1202 entries), the
+  `game_versions` field on each entry. Every 1.21.x point release from 1.21.1 through 1.21.11 has
+  at least one Fabric API release -- no gaps on the Fabric side at all in this range.
+- **NeoForge**: `GET https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge`
+  (1202 versions). NeoForge's own version scheme embeds the Minecraft minor directly
+  (`21.<mc-minor>.<build>`, e.g. `21.4.157` for 1.21.4): grouping the 422 `21.*` releases by that
+  middle segment shows real NeoForge builds only for minors 0, 1, 3, 4, 5, 8, 10 and 11 -- **1.21.2,
+  1.21.6, 1.21.7 and 1.21.9 never got a NeoForge release at all**, confirmed by the complete absence
+  of any `21.2.*`/`21.6.*`/`21.7.*`/`21.9.*` version string in the live feed, not merely an
+  unlucky sample.
+
+**Candidates with both, per Minecraft's own release-date feed** (`GET
+https://api.modrinth.com/v2/tag/game_version`, `date` field per version) grouped into "drops" (a
+feature release followed immediately by its own point-release patches): 1.21.2+1.21.3 (final point
+with NeoForge: **1.21.3**, 2024-10-23), 1.21.4 solo (2024-12-03), 1.21.5 solo (2025-03-25),
+1.21.6+1.21.7 (no NeoForge release for either -- the whole drop is disqualified), 1.21.8 solo
+(2025-07-17), 1.21.9+1.21.10 (final point with NeoForge: **1.21.10**, 2025-10-07), 1.21.11 solo
+(2025-12-09, closing out the 1.21.x line before 26.1). Six qualifying final points in total:
+1.21.3, 1.21.4, 1.21.5, 1.21.8, 1.21.10, 1.21.11.
+
+**Picking three of six, on adoption and spread**: Modrinth's own faceted search
+(`GET /v2/search?facets=[["versions:<v>"]]`, `total_hits`) as a live adoption proxy --
+
+| Version | Modrinth projects supporting it |
+|---|---|
+| 1.21.3 | 45,049 |
+| 1.21.4 | **53,123** |
+| 1.21.5 | 48,757 |
+| 1.21.8 | 50,178 |
+| 1.21.10 | 46,509 |
+| 1.21.11 | 52,467 |
+
+1.21.4 and 1.21.5 are unambiguous: highest adoption of the early/mid candidates and each its own
+solo drop (no lower-adoption sibling point release competing for the same slot), a real four-month
+spread against Wave 1's own 1.21.1. For the third slot, 1.21.8 was picked over 1.21.10 and 1.21.11:
+1.21.8 outdrew 1.21.10 on adoption (50,178 vs 46,509 projects) and stayed the current point for 2.5
+months before 1.21.9 (2025-07-17 to 2025-09-30) against 1.21.10's own two months before 1.21.11
+(2025-10-07 to 2025-12-09) -- both "how long-lived" signals the ticket's own instructions named
+point the same way, to 1.21.8. 1.21.11 was passed over even though its adoption count is close
+behind 1.21.4's: it sits only ~3.5 months before 26.1 (2025-12-09 to 2026-03-24), the least
+independent coverage of the six candidates, and 1.21.8 already sits at a well-spread middle point
+between 1.21.5 and 26.2 that 1.21.10/1.21.11 would only crowd.
+
+**Coordinates, verified by direct HTTP request against their own Maven, per GV-2's own discipline**
+(not carried over from the feed JSON unverified):
+
+| Coordinate | Verified as | How |
+|---|---|---|
+| Fabric API, 1.21.4 | `0.119.4+1.21.4` | `maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml` lists it; `fabric-api-0.119.4+1.21.4.jar` HTTP 200 |
+| Fabric API, 1.21.5 | `0.128.2+1.21.5` | same metadata file; jar HTTP 200 |
+| Fabric API, 1.21.8 | `0.136.1+1.21.8` | same metadata file; jar HTTP 200 |
+| NeoForge, 1.21.4 | `21.4.157` | `maven.neoforged.net/releases/net/neoforged/neoforge/21.4.157/neoforge-21.4.157-universal.jar` and `.pom` both HTTP 200 |
+| NeoForge, 1.21.5 | `21.5.98` | same, `21.5.98` universal jar + pom HTTP 200 |
+| NeoForge, 1.21.8 | `21.8.54` | same, `21.8.54` universal jar + pom HTTP 200 |
+
+**Nodes added the way GV-2 added Wave 1's** (`settings.gradle.kts`'s own `match()` helper,
+`stonecutter.properties.toml`'s per-version/per-loader sections) -- `./gradlew projects` confirms
+all twelve nodes register: `1.21.4-fabric`, `1.21.4-neoforge`, `1.21.5-fabric`, `1.21.5-neoforge`,
+`1.21.8-fabric`, `1.21.8-neoforge` alongside the six from Waves 1–2.
+
+**The hook re-verification this ticket's own acceptance criteria require, per-version, not
+assumed**: `javap -p` against the real Loom-merged jar for each of the three new versions (already
+cached locally from prior sibling-ticket builds in this fleet's shared `~/.gradle`, so no fresh
+Minecraft download was needed to inspect them) --
+
+- `JigsawPlacement.addPieces`'s public overload, `JigsawStructure.maxDistanceFromCenter`'s field
+  type, `Placer.tryPlacingChildren`'s signature, and `PoolElementStructurePiece`'s constructor are
+  **byte-for-byte identical in shape across 1.21.4, 1.21.5 and 1.21.8** to 1.21.1's own (the
+  existing `elif <26.1` mixin branch): plain `int maxDistanceFromCenter` (no `MaxDistance` record
+  on any of the three -- the record's real introduction point is therefore later than 1.21.8, not
+  merely "between 1.21.2 and 1.21.9" as the jigsaw research note guessed), the same
+  `PoolAliasLookup`/`DimensionPadding`/`LiquidSettings`-bearing `addPieces` overload, the same
+  `SequencedPriorityIterator`-based placing queue. No new mixin branch needed for any of these.
+- **One real, previously-unrecorded delta found**: `RegistryAccess.registryOrThrow` -- the call
+  `JigsawStructureMixin#gv$gateOnVillageTag` makes to resolve `Registries.STRUCTURE` -- is already
+  gone on 1.21.4 (confirmed missing by `javap -p net.minecraft.core.RegistryAccess`, only the
+  `lookupOrThrow` overloads present), and gone the same way on 1.21.5 and 1.21.8. GV-5 had only
+  1.20.1/1.21.1/26.2 jars to check and reasonably (but wrongly) assumed this rename landed at the
+  same 26.1 boundary `JigsawPlacement`'s own parameter-list changes do; it did not -- first
+  confirmed live build failure was `:1.21.4-fabric:compileJava`, `error: cannot find symbol
+  registryOrThrow(ResourceKey<Registry<Structure>>)`. Fixed by moving
+  `JigsawStructureMixin`'s own Stonecutter condition from `//? if <26.1` to `//? if <1.21.2` (the
+  exact removal point between 1.21.2 and 1.21.3 is not pinned -- this ladder targets neither -- but
+  it is no later than 1.21.4, confirmed). This is the one mixin source change Wave 3 needed.
+
 ## Hook targets, per loader
 
 **Confirmed for every row** (`village-jigsaw-placement-1-20-1-to-26-2.md`, read directly against the
@@ -212,14 +314,15 @@ list gains `PoolAliasLookup`/`LiquidSettings` between 1.20.1 and 1.21.1 (`04-arc
 once as shared mixin source, compiled fresh per Stonecutter node (`ARCH-DEC-002`), not duplicated by
 hand per loader.
 
-### Version deltas relevant to the mixin (source: same note, "Version deltas" table)
+### Version deltas relevant to the mixin (source: same note, "Version deltas" table; 1.21.4/1.21.5/1.21.8 columns added by GV-17's own live `javap`)
 
-| Item | 1.20.1 | 1.21.1 | 26.2 |
-|---|---|---|---|
-| `JigsawStructure.maxDistanceFromCenter` | plain `int` | plain `int` | `MaxDistance(horizontal, vertical)` record — exact switch version between 1.21.2 and 1.21.9, not pinned |
-| `JigsawPlacement.addPieces` params | no `PoolAliasLookup`/`DimensionPadding`/`LiquidSettings` | adds all three | same as 1.21.1 |
-| Mixin support story | No official support on Forge; mods self-bootstrap SpongePowered Mixin via ModLauncher | Official declarative `[[mixins]]` since NeoForge 20.3 | same as 1.21.1 |
-| `ResourceLocation` class name | `ResourceLocation` | `ResourceLocation` | renamed `Identifier` at 1.21.11 (26.x ships unobfuscated) |
+| Item | 1.20.1 | 1.21.1 | 1.21.4 / 1.21.5 / 1.21.8 | 26.2 |
+|---|---|---|---|---|
+| `JigsawStructure.maxDistanceFromCenter` | plain `int` | plain `int` | plain `int` (all three, confirmed) | `MaxDistance(horizontal, vertical)` record — real switch point is after 1.21.8, not pinned tighter than that (GV-17 narrowed "between 1.21.2 and 1.21.9" down to "later than 1.21.8" by direct `javap`; neither this ladder's own nodes nor either research note pin it exactly) |
+| `JigsawPlacement.addPieces` params | no `PoolAliasLookup`/`DimensionPadding`/`LiquidSettings` | adds all three | same as 1.21.1 (confirmed) | same as 1.21.1 |
+| `RegistryAccess.registryOrThrow` (used by `JigsawStructureMixin`) | present | present | **gone** (GV-17: confirmed missing by `javap` on all three; the earlier assumption that this rename landed at 26.1 was wrong) | gone |
+| Mixin support story | No official support on Forge; mods self-bootstrap SpongePowered Mixin via ModLauncher | Official declarative `[[mixins]]` since NeoForge 20.3 | same as 1.21.1 | same as 1.21.1 |
+| `ResourceLocation` class name | `ResourceLocation` | `ResourceLocation` | `ResourceLocation` (confirmed, all three) | renamed `Identifier` at 1.21.11 (26.x ships unobfuscated) |
 
 `PLATFORM-REQ-002`: **if** a hook target is renamed or removed by a Minecraft update, **then** the
 build fails at compile time for a direct reference, or mod load fails with a named error for a looser

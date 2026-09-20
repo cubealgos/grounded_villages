@@ -695,3 +695,78 @@ re-confirmed per this ticket's own acceptance criterion.
 
 `./gradlew chiseledBuild chiseledCheck --continue`: **BUILD SUCCESSFUL in 12s**, all six nodes,
 zero `Cannot remap` or other Mixin warnings anywhere in the log.
+
+## GV-17: Wave 3 nodes, the mixin re-verification, and the 1.21.8-fabric harness proof
+
+Six new nodes (`1.21.4-fabric`, `1.21.4-neoforge`, `1.21.5-fabric`, `1.21.5-neoforge`,
+`1.21.8-fabric`, `1.21.8-neoforge`) added the way GV-2 added Wave 1's; full choice evidence in
+`docs/spec/contracts/platform-matrix.md` "Wave 3 nodes (GV-17)". This section is the live build/
+test/harness proof behind that entry's summary.
+
+### Mixin re-verification, per new version's own jar
+
+`javap -p` against the real Loom-merged jar for each of 1.21.4, 1.21.5 and 1.21.8 (already cached
+locally from prior sibling-ticket builds in this fleet's shared `~/.gradle`): all three share the
+existing `elif <26.1` mixin branch's shape byte-for-byte (`JigsawPlacement.addPieces`'s public
+overload, `Placer.tryPlacingChildren`, `PoolElementStructurePiece`'s constructor, plain `int
+maxDistanceFromCenter` -- no `MaxDistance` record on any of the three). One real delta found and
+fixed: `RegistryAccess.registryOrThrow` (used by `JigsawStructureMixin`) is already gone on all
+three -- first surfaced as a live `:1.21.4-fabric:compileJava` failure (`cannot find symbol
+registryOrThrow`), fixed by moving that one Stonecutter condition from `//? if <26.1` to `//? if
+<1.21.2`. See `contracts/platform-matrix.md`'s own "Wave 3 nodes" section for the full `javap`
+transcript excerpts.
+
+### `chiseledCheck`/`chiseledBuild`, all twelve nodes
+
+`./gradlew clean`, daemon stopped, then `./gradlew chiseledCheck --continue --no-daemon`:
+**BUILD SUCCESSFUL in 11.6s** (110 actionable tasks: 43 executed, 58 from cache, 9 up-to-date) --
+project outputs clean and no daemon, but the Minecraft artifact caches and Gradle's own local
+build cache were already warm from this ticket's own incremental compile checks and from sibling
+worktrees sharing this machine's `~/.gradle`, so this is a realistic warm-cache CI number, not a
+from-nothing first run. For the from-nothing cost: the three new NeoForge legs' own
+`createMinecraftArtifacts` (NeoFormRuntime download+decompile+patch+recompile, unavoidable on a
+truly fresh cache) measured 83.7s/85.5s/93.6s respectively the first time each ran (**4m 57s**
+combined for all three, compiled together with `--continue`) -- the Fabric legs' own Minecraft
+jars were already cached before this ticket started and were not re-measured cold. `chiseledBuild`
+(all twelve nodes, packaging): **BUILD SUCCESSFUL in 13.6s**, twelve distinct jars under
+`build/libs/0.1.0/`, six new (`grounded_villages-fabric-0.1.0+1.21.{4,5,8}.jar`,
+`grounded_villages-neoforge-0.1.0+1.21.{4,5,8}.jar`) alongside the six from Waves 1–2.
+
+A second, harness-only fix was needed to get `chiseledCheck` green on `1.21.8-fabric`:
+`src/seedsweep/java/grounded_villages/harness/SeedSweepRunner.java` (GV-10) had only ever compiled
+against `26.2-fabric` and used that version's own API shape unconditionally --
+`net.minecraft.resources.Identifier`, `Level.getRespawnData().pos()`, and `ChunkPos.x()`/`.z()`
+(a record accessor) -- none of which exist on 1.21.8 (`ResourceLocation`, `getSharedSpawnPos()`,
+and `ChunkPos.x`/`.z` as plain public fields there instead). `src/seedsweep/java` is outside
+Stonecutter's preprocessed `src/main/java` tree (`docs/loaders.md`'s own GV-12 finding), so a `//?
+if` conditional would never be processed here; fixed with `var` (the structure-id type), a
+reflective spawn-position lookup mirroring `GroundedVillagesNeoForge#isDevelopment()`'s own
+try-then-fall-back shape, and by keeping the chunk coordinates as plain `int`s already computed
+from the found `BlockPos` rather than reading them back off the `ChunkPos` object.
+
+### The 1.21.8-fabric harness proof: seed 1, live, against the 26.2 baseline
+
+`./gradlew :1.21.8-fabric:seedSweep -Pseeds=1` (the harness widened onto one Wave 3 node,
+`build.fabric.gradle.kts`'s own node-conditional block) -- a real dedicated server boot, real
+world generation, the full mixin hook chain firing live (`build/seedsweep/run-1/logs/latest.log`
+shows `PieceGate fired: accept/reject building|street (...)` and `PieceLadder fired: shrink (27
+non-street, 6 rejected)` exactly as every other proof in this file). **BUILD SUCCESSFUL in 1m 42s.**
+
+| field | 1.21.8-fabric (this ticket) | 26.2-fabric baseline (`grounded-26.2-fabric-10-seeds-all.json`, seed 1) | match |
+|---|---|---|---|
+| start position | `(640, 0, 816)` | `(640, 0, 816)` | yes |
+| piece count | 52 | 52 | yes |
+| height spread | 3.0 | 3.0 | yes |
+| water fraction | 0.0% | 0.0% | yes |
+| tier | hamlet | hamlet | yes |
+| rejected water / height | 3 / 3 | 3 / 3 | yes |
+| ladder outcome | shrink | shrink | yes |
+| runtime | 79,824 ms | 76,301 ms | -- (real-wall-clock only, expected to vary run to run) |
+
+Every placement-relevant field matches exactly -- consistent with this ticket's own `javap`
+finding that 1.21.8's hook-target shapes are byte-for-byte identical to 1.21.1's (the only
+`registryOrThrow` delta above does not touch anything this harness measures). Numbers were not
+expected to match exactly across Minecraft versions in general (terrain generation itself can
+shift between versions) -- they happen to here because 1.21.1 through 1.21.8 share the same
+terrain/structure generation math this mod observes; only `runtimeMillis`, which this harness
+never asserts on, differs, and only by ordinary wall-clock variance.

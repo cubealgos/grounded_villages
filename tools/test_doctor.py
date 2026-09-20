@@ -73,6 +73,24 @@ STONECUTTER_PROPS = textwrap.dedent('''
 
     [neoforge."26.2"]
     deps.neoforge = "26.2.0.88"
+
+    [fabric."1.21.4"]
+    deps.fabric_api = "0.119.4+1.21.4"
+
+    [neoforge."1.21.4"]
+    deps.neoforge = "21.4.157"
+
+    [fabric."1.21.5"]
+    deps.fabric_api = "0.128.2+1.21.5"
+
+    [neoforge."1.21.5"]
+    deps.neoforge = "21.5.98"
+
+    [fabric."1.21.8"]
+    deps.fabric_api = "0.136.1+1.21.8"
+
+    [neoforge."1.21.8"]
+    deps.neoforge = "21.8.54"
 ''')
 
 FAKE_JAVA_25 = "#!/bin/sh\necho 'openjdk version \"25.0.1\" 2026-01-01' 1>&2\n"

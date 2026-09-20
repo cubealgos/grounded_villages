@@ -39,9 +39,17 @@ import java.util.Optional;
  * Optional<Structure.GenerationStub>}) is identical on every targeted version (javap, GV-5) --
  * no Stonecutter preprocessor conditional needed for the injection itself. One is needed for the
  * registry lookup inside the handler body, though: {@code RegistryAccess.registryOrThrow} is
- * renamed {@code lookupOrThrow} in 26.2 (confirmed by {@code javap} against the 26.2 jar, GV-5 --
- * not named in {@code contracts/platform-matrix.md}'s version-delta table, which only tracks
- * {@code JigsawPlacement}/{@code Placer} signatures, not this call).
+ * renamed {@code lookupOrThrow} well before 26.2 -- GV-5 only had 1.20.1/1.21.1/26.2 jars to
+ * {@code javap} and (reasonably, from those three points alone) assumed the rename landed at the
+ * same 26.1 boundary {@code JigsawPlacement}'s own parameter-list changes do. GV-17's own {@code
+ * javap} against the real 1.21.4 jar (the first Wave 3 node built) found this wrong: {@code
+ * registryOrThrow} is already gone on 1.21.4 -- {@code RegistryAccess} exposes only {@code
+ * lookupOrThrow} there, confirmed by decompiling the Loom-merged jar directly, not inferred. The
+ * exact removal point between 1.21.2 and 1.21.3 is not pinned (this ladder targets neither), but
+ * the boundary is real and at latest 1.21.4, not 26.1 -- {@code contracts/platform-matrix.md}
+ * "Wave 3 nodes (GV-17)" has the corrected finding. Not named in {@code
+ * contracts/platform-matrix.md}'s own version-delta table before this ticket, which only tracked
+ * {@code JigsawPlacement}/{@code Placer} signatures, not this call.
  *
  * <p><b>GV-8 also rolls the tier here</b> (`docs/spec/domains/tiers.md`), not inside {@code
  * JigsawPlacementMixin}: this is the one place in the vanilla call chain with a {@code this} to
@@ -75,7 +83,7 @@ abstract class JigsawStructureMixin {
 
     @Inject(method = "findGenerationPoint", at = @At("HEAD"))
     private void gv$gateOnVillageTag(Structure.GenerationContext context, CallbackInfoReturnable<Optional<Structure.GenerationStub>> cir) {
-        //? if <26.1 {
+        //? if <1.21.2 {
         Registry<Structure> structures = context.registryAccess().registryOrThrow(Registries.STRUCTURE);
         //?} else {
         /*Registry<Structure> structures = context.registryAccess().lookupOrThrow(Registries.STRUCTURE);

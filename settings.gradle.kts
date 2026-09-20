@@ -42,6 +42,15 @@ stonecutter {
         match("1.20.1", "fabric", "forge")
         match("1.21.1", "fabric", "neoforge")
         match("26.2", "fabric", "neoforge")
+
+        // Wave 3 (GV-17): the three 1.21.x point releases chosen live 2026-09-21 against
+        // Modrinth's own Fabric API release feed and maven.neoforged.net's own NeoForge release
+        // feed -- the last point of each "drop" that has both, favouring the longer-lived,
+        // higher-adoption ones (contracts/platform-matrix.md "Wave 3 nodes (GV-17)" has the full
+        // evidence table and why 1.21.3/1.21.6/1.21.7/1.21.9/1.21.10/1.21.11 were not picked).
+        match("1.21.4", "fabric", "neoforge")
+        match("1.21.5", "fabric", "neoforge")
+        match("1.21.8", "fabric", "neoforge")
         vcsVersion = "1.21.1-fabric"
     }
 }
