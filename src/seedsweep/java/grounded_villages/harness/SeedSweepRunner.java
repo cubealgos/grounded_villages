@@ -7,7 +7,6 @@ import grounded_villages.tier.TierAssignment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.StructureTags;
@@ -62,7 +61,7 @@ public final class SeedSweepRunner {
     public static VillageSweepResult run(MinecraftServer server, long seed, Path outputFile) throws IOException {
         long startMillis = System.currentTimeMillis();
         ServerLevel level = server.overworld();
-        BlockPos spawn = level.getRespawnData().pos();
+        BlockPos spawn = sharedSpawnPos(level);
 
         BlockPos nearest = level.findNearestMapStructure(StructureTags.VILLAGE, spawn, SEARCH_RADIUS_CHUNKS, false);
         if (nearest == null) {
@@ -75,8 +74,18 @@ public final class SeedSweepRunner {
         // within the start chunk's own STRUCTURE_STARTS generation step
         // (village-jigsaw-placement-1-20-1-to-26-2.md §A/§C), so one chunk is enough to see every
         // piece's bounding box, even pieces whose own chunk hasn't generated yet.
-        ChunkPos startChunk = new ChunkPos(nearest.getX() >> 4, nearest.getZ() >> 4);
-        level.getChunkSource().getChunk(startChunk.x(), startChunk.z(), ChunkStatus.FULL, true);
+        //
+        // The chunk coordinates are kept as plain ints (not read back off `startChunk` via
+        // `.x()`/`.z()`) because `ChunkPos` is a plain class with public `x`/`z` fields pre-26.x
+        // and a record with `x()`/`z()` accessor methods on 26.2 (GV-17, found compiling this
+        // harness onto 1.21.8-fabric for the first time) -- no single field/method-call spelling
+        // compiles on both, and `src/seedsweep/java` is outside Stonecutter's preprocessed
+        // `src/main/java` tree (docs/loaders.md's own GV-12 finding), so a `//? if` conditional
+        // here would never be processed either.
+        int chunkX = nearest.getX() >> 4;
+        int chunkZ = nearest.getZ() >> 4;
+        ChunkPos startChunk = new ChunkPos(chunkX, chunkZ);
+        level.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
 
         // Not getStructureWithPieceAt(BlockPos, TagKey): `nearest`'s own Y is whatever
         // JigsawStructure's (inert) `start_height` codec field says -- 0 for village_plains.json
@@ -140,7 +149,16 @@ public final class SeedSweepRunner {
         double waterFraction = SeedSweepStats.waterFraction(waterSamples, totalSamples);
         long runtimeMillis = System.currentTimeMillis() - startMillis;
 
-        Identifier structureId = structureRegistry.getKey(start.getStructure());
+        // `var`, not a named type: `Registry.getKey` returns `ResourceLocation` pre-1.21.11 and
+        // `Identifier` from 1.21.11 on (the same rename `contracts/platform-matrix.md`'s own
+        // version-delta table tracks for the mixin) -- src/seedsweep/java is a plain extra
+        // sourceSet, outside Stonecutter's preprocessed src/main/java tree (docs/loaders.md's own
+        // GV-12 finding: only src/main/java is run through `stonecutterGenerate`), so a `//? if`
+        // conditional here would never be processed and both branches would compile literally.
+        // `var` sidesteps the class-name question entirely; the only use below is `.toString()`,
+        // present on both classes (GV-17, found compiling this harness onto 1.21.8-fabric for the
+        // first time -- every prior build of this file only ever targeted 26.2-fabric).
+        var structureId = structureRegistry.getKey(start.getStructure());
 
         // GV-8: the mixin rolls the tier once, from JigsawStructureMixin, well before this
         // harness ever runs -- TierAssignmentRegistry is the "static last-assignment map keyed by
@@ -189,5 +207,31 @@ public final class SeedSweepRunner {
             rejectedWater, rejectedHeight, ladderOutcome, runtimeMillis
         );
         return result;
+    }
+
+    /**
+     * The world's own spawn position, resolved reflectively across a real API split GV-17 found
+     * compiling this harness onto 1.21.8-fabric for the first time: {@code Level} exposes
+     * {@code BlockPos getSharedSpawnPos()} pre-26.x and {@code LevelData.RespawnData
+     * getRespawnData()} (whose own {@code .pos()} is the equivalent) from 26.2 on -- confirmed by
+     * direct {@code javap} against both jars, neither method present on both versions. Reflection,
+     * not a Stonecutter conditional, for the same reason the chunk-coordinate fix above gives:
+     * {@code src/seedsweep/java} is outside Stonecutter's preprocessed tree
+     * (docs/loaders.md). Mirrors {@code GroundedVillagesNeoForge#isDevelopment()}'s own
+     * try-then-fall-back-reflectively shape for the same kind of unpreprocessed-directory drift.
+     */
+    private static BlockPos sharedSpawnPos(ServerLevel level) {
+        try {
+            return (BlockPos) ServerLevel.class.getMethod("getSharedSpawnPos").invoke(level);
+        } catch (ReflectiveOperationException notPresent) {
+            try {
+                Object respawnData = ServerLevel.class.getMethod("getRespawnData").invoke(level);
+                return (BlockPos) respawnData.getClass().getMethod("pos").invoke(respawnData);
+            } catch (ReflectiveOperationException neitherPresent) {
+                throw new IllegalStateException(
+                    "SeedSweepRunner: neither Level#getSharedSpawnPos() nor Level#getRespawnData() "
+                        + "resolved reflectively on this Minecraft version", neitherPresent);
+            }
+        }
     }
 }

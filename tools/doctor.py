@@ -52,6 +52,10 @@ JAVA_ROWS = {
     "1.20.1 (fabric, forge)": 17,
     "1.21.1 (fabric, neoforge)": 21,
     "26.2 (fabric, neoforge)": 25,
+    # Wave 3 (GV-17): every 1.21.x point release shares the same >=1.20.5 -> Java 21 floor.
+    "1.21.4 (fabric, neoforge)": 21,
+    "1.21.5 (fabric, neoforge)": 21,
+    "1.21.8 (fabric, neoforge)": 21,
 }
 GRADLE_FLOOR = (9, 5, 1)
 OTHER_FLOORS = {"just": (1, 58), "python": (3, 12)}
@@ -75,6 +79,13 @@ COORDINATE_ROWS = [
     ("NeoForge, 1.21.1", ("neoforge", "1.21.1", "deps", "neoforge"), "21.1.251"),
     ("Fabric, 26.2", ("fabric", "26.2", "deps", "fabric_api"), "0.161.0+26.2"),
     ("NeoForge, 26.2", ("neoforge", "26.2", "deps", "neoforge"), "26.2.0.88"),
+    # Wave 3 (GV-17): verified live 2026-09-21 (contracts/platform-matrix.md "Wave 3 nodes").
+    ("Fabric, 1.21.4", ("fabric", "1.21.4", "deps", "fabric_api"), "0.119.4+1.21.4"),
+    ("NeoForge, 1.21.4", ("neoforge", "1.21.4", "deps", "neoforge"), "21.4.157"),
+    ("Fabric, 1.21.5", ("fabric", "1.21.5", "deps", "fabric_api"), "0.128.2+1.21.5"),
+    ("NeoForge, 1.21.5", ("neoforge", "1.21.5", "deps", "neoforge"), "21.5.98"),
+    ("Fabric, 1.21.8", ("fabric", "1.21.8", "deps", "fabric_api"), "0.136.1+1.21.8"),
+    ("NeoForge, 1.21.8", ("neoforge", "1.21.8", "deps", "neoforge"), "21.8.54"),
     ("shared: fabric loader", ("deps", "fabric_loader"), "0.19.5"),
     ("shared: fabric-loom", ("loomx", "loom_version"), "1.17-SNAPSHOT"),
 ]
