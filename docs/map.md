@@ -9,10 +9,12 @@ signature page before calling into a package you did not write.
 
 | project | source roots |
 |---|---|
-| `root` | `src/fabric/java`, `src/forge/java`, `src/neoforge/java`, `src/seedsweep/java` |
+| `root` | `src/fabric/java`, `src/forge/java`, `src/main/java`, `src/neoforge/java`, `src/seedsweep/java`, `src/test/java` |
 
 | package | project | types | what |
 |---|---|---|---|
+| `grounded_villages.config` | root | ConfigBounds, ConfigCodec, ConfigDefaults, ConfigHolder, ConfigIo, ConfigJson, ConfigMigrations, ConfigModel | The one config file this mod writes (`docs/spec/contracts/data-contract.md` DATA-REQ-002): a pure Java model (grounded_villages.config.ConfigModel) and its parser/serialiser (grounded_villages.config.ConfigCodec), built on a small hand-rolled, dependency-free JSON reader (grounded_villages.config.ConfigJson) rather than a config library (`decisions/DEC-008-config-file.md`). |
+| `grounded_villages.config` | root (test) | ConfigCodecTest, ConfigIoTest, ConfigMigrationsTest, ConfigModelTest |  |
 | `grounded_villages.fabric` | root (fabric) | GroundedVillagesFabric |  |
 | `grounded_villages.forge` | root (forge) | GroundedVillagesForge |  |
 | `grounded_villages.harness` | root (seedsweep) | SeedSweepCommand, SeedSweepRunner, SeedSweepStats, SeedSweepStatsTest, VillageSweepResult |  |
@@ -30,8 +32,9 @@ signature page before calling into a package you did not write.
 
 | tool | what | entry points |
 |---|---|---|
-| `tools/doctor.py` | Toolchain floors and the spec copy, per docs/spec/contracts/platform-matrix.md. | `run()`, `parse_version(text)`, `find_java(major)`, `check_java_row(label, floor)`, `check_wrapper()`, `check_tool(name, floor_key)`, `main_checkout()`, `check_spec_copy()`, `check_map()`, `report(ok, message)`, `main()` |
+| `tools/doctor.py` | Toolchain floors and the spec copy, per docs/spec/contracts/platform-matrix.md. | `run()`, `parse_version(text)`, `gradle_user_home()`, `find_provisioned_jdk(major)`, `find_java(major)`, `check_java_row(label, floor)`, `check_wrapper(root)`, `check_stonecutter_version(root)`, `dig(doc, path)`, `check_coordinates(root)`, `check_tool(name, floor_key)`, `main_checkout(root)`, `check_spec_copy(root)`, `check_map(root)`, `report(ok, message)`, `main(argv)` |
 | `tools/map.py` | Generate the repository map from the source: docs/map.md locates every package, docs/map/.md lists every type's summary and non-private signatures. | `scan_java(src)`, `summary_of(javadoc)`, `squeeze(text)`, `strip_annotations(head)`, `parse_java(path)`, `parse_member(head, type_name, doc)`, `package_summary(package_info)`, `parse_kotlin(path)`, `parse_python(path)`, `project_of(rel)`, `walk(root)`, `collect(root)`, `page_of(pkg)`, `render_locator(tree)`, `render_package(pkg)`, `render_all(root)`, `write(root, files)`, `check(root, files)`, `main(argv)` |
 | `tools/release_notes.py` | Print the release notes for one shipped combination's jar. | `section(changelog, version)`, `main()` |
 | `tools/seed_sweep_report.py` | Aggregate GV-10's per-seed seed-sweep JSON files into a table and a combined JSON report. | `load_results(paths)`, `render_table(results)`, `summary(results)`, `main()` |
+| `tools/test_doctor.py` | tools/doctor.py, exercised as the command a person runs (rule 6 of the standard): a fixture repository tree in a temporary directory, environment variables standing in for JAVA_HOME, GRADLE_USER_HOME and GV_VAULT_SPEC, and a fake `java` on PATH -- never the real JDKs or vault this machine happens to have. | `write_fake_java(bin_dir, version)`, `write_provisioned_jdk(jdks_root, name, major, full, macos)` |
 | `tools/test_map.py` | The map generator, exercised as the command a person runs (rule 6 of the standard): a fixture tree in a temporary directory, `python3 tools/map.py` to write, `--check` to pass, an edit to the source, `--check` to fail. | `run(root)` |

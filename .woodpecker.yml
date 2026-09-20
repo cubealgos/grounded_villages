@@ -3,17 +3,61 @@
 # through 26.2 in one repository). If it passes on a laptop and fails here, that difference is a
 # real finding rather than a configuration guess.
 #
-# GV-2 fills in the real Stonecutter build `just check` (via chiseledBuild/chiseledCheck) drives;
-# until then this pipeline fails at the `just check` step, which is the correct state for a
-# bootstrap-only repository. GV-3 tunes this file once the real build exists; each wave beyond
-# that adds jobs for its own new nodes only (contracts/platform-matrix.md "CI matrix"), never a
-# rebuild of an already-shipped combination's own job.
+# `just check` (justfile) now drives every stage `contracts/platform-matrix.md`'s CI matrix names:
+# lint (`chiseledCheck -x test`), unit tests (`chiseledCheck`), the placeholder `gametest` stage
+# (the same task again, until GV-11/GV-15 wire a real per-loader game test), and `chiseledBuild` --
+# the aggregate `buildAndCollect`/`reobfJar` path GV-2 found breaks independently of a green
+# `chiseledCheck` (the empty-`@Mixin`-refmap failure on the Forge leg, platform-matrix.md "Second
+# correction"), so packaging is exercised here too, not assumed from passing tests alone.
+#
+# `PLATFORM-REQ-004` ("a red job for one combination does not block another"): the six nodes have
+# no dependency on each other in the build graph (`04-architecture.md` `ARCH-DEC-002`, per-node
+# compilation) -- `--continue` on every aggregate Gradle invocation (justfile) makes CI actually
+# exercise that independence, rather than Gradle's own fail-fast default stopping at the first red
+# node and never attempting, or reporting on, the rest. `just check` stays the one command
+# developers and CI both run; independence is structural in what that command does, not a second
+# Woodpecker job per node -- this pipeline verifies only, and does not publish anywhere
+# (`standards/tech/separate-verification-from-deployment.md`; GV-21 is the deployment pipeline).
+#
+# Cache: `/root/.gradle` (the module/dependency cache, the wrapper distribution, and the
+# foojay-provisioned Java 17/21 JDKs -- Java 25 comes from the image itself) is mounted from a
+# host path on `operations`, the single Woodpecker agent host, so a six-node/three-JDK build does
+# not re-fetch the whole toolchain and dependency graph on every push. Woodpecker restricts
+# `volumes:` to repositories with "Trusted" > "Volumes" enabled in that repo's own project
+# settings (woodpecker-ci.org/docs/usage/volumes) -- an instance-side toggle this ticket has no
+# means to set or verify from inside the repository (no CI secret and no Woodpecker API token are
+# in scope here). Per that same documentation, an untrusted repo simply does not get the mount;
+# it does not fail the pipeline. Follow-up for whoever holds that toggle: confirm it is on for
+# this repository, or every run pays the cold cost measured below.
+#
+# Measured locally 2026-09-20 (Apple M-series, arm64 -- NOT the runner's own architecture, so
+# these bound the caching case rather than predicting the runner's real wall time), against an
+# isolated `GRADLE_USER_HOME` under a scratch directory rather than the machine's own shared
+# `~/.gradle`, which four sibling tickets (GV-4/5/9/10) build against concurrently in their own
+# worktrees:
+#   cold (`./gradlew chiseledCheck chiseledBuild` --continue, empty `GRADLE_USER_HOME`, matching
+#         an unmounted/first-ever container -- Gradle wrapper, foojay-provisioned 17/21, every
+#         Minecraft/Fabric/NeoForge/Forge dependency, all fetched fresh): 20m 39s
+#   warm (the real `just check` -- lint + map-check + test + gametest + build, four separate
+#         `./gradlew` starts -- against the now-populated `GRADLE_USER_HOME`, no source change so
+#         every node lands UP-TO-DATE, the cache's ceiling rather than a typical incremental push
+#         which would still recompile the changed node(s)): 50s
+# Both runs are otherwise identical (image, commands, source tree) -- the entire gap is whether
+# `/root/.gradle` already holds the toolchain and dependency graph. That gap is the whole case for
+# the mount below: a six-node/three-JDK build the runner's time budget cannot afford to repeat
+# from zero on every push.
 #
 # Temurin 25 is pinned to the JDK major the platform matrix floors on for 26.2, the newest rung;
-# Gradle's own toolchain auto-provisioning (org.gradle.toolchains.foojay-resolver-convention) is
-# expected to fetch 17 and 21 for the older rungs, once GV-2 wires it in -- the alternative is all
-# three JDKs baked into the CI image, a call GV-3 makes once the real build exists to measure
-# against.
+# Gradle's own toolchain auto-provisioning (org.gradle.toolchains.foojay-resolver-convention)
+# fetches 17 and 21 for the older rungs into the cached `/root/.gradle/jdks` above -- confirmed
+# working end-to-end by the same local run (`just doctor` also floor-checks these versions against
+# `contracts/platform-matrix.md`, `PLATFORM-REQ-001`).
+#
+# No artifact upload: none of this fleet's sibling pipelines (villager_voices, create_firearms,
+# create_brass_compass, create_metered_motor, create_synthetic_diamonds,
+# create_villager_customers) publish pipeline artifacts, so this one doesn't either --
+# `chiseledBuild`'s six jars land under `build/libs/` inside the ephemeral container and go
+# nowhere. GV-21 is the separate deployment pipeline that ships jars somewhere.
 
 when:
   - event: [push, pull_request, manual]
@@ -24,6 +68,9 @@ steps:
     environment:
       # Gradle's daemon has nothing to keep warm in a one-shot container.
       GRADLE_OPTS: -Dorg.gradle.daemon=false
+      GRADLE_USER_HOME: /root/.gradle
+    volumes:
+      - /var/lib/woodpecker-cache/grounded_villages/gradle:/root/.gradle
     commands:
       - ./.ci/install-tools.sh
       - just check
