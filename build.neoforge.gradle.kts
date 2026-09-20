@@ -11,6 +11,17 @@ plugins {
 version = "${property("mod.version")}+${sc.current.version}"
 base.archivesName = "${property("mod.id") as String}-neoforge"
 
+// GV-24: the produced jar's actual file name, decoupled from `version`'s own semver-metadata
+// style above (kept as-is -- it still feeds e.g. the mod jar's manifest attributes) --
+// `docs/spec/operations/release.md`'s own `grounded_villages-<mc>-<loader>-<version>.jar` scheme,
+// the one expression `buildSrc/src/main/kotlin/GvJarNaming.kt` also gives `buildAndCollect` below,
+// `tools/jar_naming.py` and `tools/doctor.py`'s `check_targets`. `sc.current.project` is already
+// "<mc>-<loader>" (settings.gradle.kts's own `match()` helper), so a node a later ticket adds
+// (GV-17) is covered with nothing to edit here. Applied on the `jar` task itself below (this
+// node's own `buildAndCollect` copies straight from it, no reobf step) via the existing
+// `withType<Jar>` block.
+val jarFileName = gvJarFileName(property("mod.id") as String, sc.current.project, property("mod.version") as String)
+
 // docs/spec/contracts/platform-matrix.md "Per-row toolchain": 1.21.1 -> 21, 26.2 -> 25.
 val requiredJava: JavaVersion = when {
     sc.current.parsed >= "26.1" -> JavaVersion.VERSION_25
@@ -118,6 +129,7 @@ tasks {
 
     val modId = project.property("mod.id") as String
     withType<Jar> {
+        archiveFileName.set(jarFileName)
         from(rootProject.file("LICENSE")) { rename { "$it-$modId" } }
     }
 

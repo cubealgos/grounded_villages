@@ -10,6 +10,16 @@ plugins {
 version = "${property("mod.version")}+${sc.current.version}"
 base.archivesName = "${property("mod.id") as String}-forge"
 
+// GV-24: the produced jar's actual file name, decoupled from `version`'s own semver-metadata
+// style above (kept as-is -- it still feeds e.g. the mod jar's manifest attributes) --
+// `docs/spec/operations/release.md`'s own `grounded_villages-<mc>-<loader>-<version>.jar` scheme,
+// the one expression `buildSrc/src/main/kotlin/GvJarNaming.kt` also gives `buildAndCollect` below,
+// `tools/jar_naming.py` and `tools/doctor.py`'s `check_targets`. `sc.current.project` is already
+// "<mc>-<loader>" (settings.gradle.kts's own `match()` helper), so a node a later ticket adds
+// (GV-17) is covered with nothing to edit here. Applied on `reobfJar` below -- this node's own
+// `buildAndCollect` copies from that reobfuscated jar, not the plain `jar` task's own output.
+val jarFileName = gvJarFileName(property("mod.id") as String, sc.current.project, property("mod.version") as String)
+
 // docs/spec/contracts/platform-matrix.md "Per-row toolchain": 1.20.1 -> Java 17, the one rung
 // below fabric-loom's own >=1.20.5 -> 21 boundary -- Mojang ships Java 17 to end users on 1.20.1.
 java {
@@ -129,6 +139,14 @@ tasks {
 
     named("createMinecraftArtifacts") {
         dependsOn("stonecutterGenerate")
+    }
+
+    // GV-24: `reobfJar`, not `jar`, is the task `buildAndCollect` below actually copies from --
+    // named explicitly (rather than folded into the `withType<Jar>` shape the other two loaders'
+    // build files use) so the rename lands on the one task whose output is real, reobfuscated
+    // output, not the pre-reobf intermediate `jar` produces.
+    named<Jar>("reobfJar") {
+        archiveFileName.set(jarFileName)
     }
 
     register<Copy>("buildAndCollect") {

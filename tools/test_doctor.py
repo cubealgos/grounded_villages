@@ -13,6 +13,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
+from jar_naming import jar_file_name, jar_path
+
 TOOL = Path(__file__).resolve().parent / "doctor.py"
 MAP_TOOL = Path(__file__).resolve().parent / "map.py"
 
@@ -44,15 +46,20 @@ SETTINGS_GRADLE_NODES = [
 ]
 
 
-def targets_json(nodes: list[str]) -> str:
+def targets_json(nodes: list[str], version: str = "0.1.0") -> str:
+    """Built from `jar_naming.jar_path` itself (GV-24), not a re-typed literal -- so a fixture
+    built by this helper always agrees with `check_target_jars`'s own expectation unless a test
+    deliberately mutates the jar field afterward to prove drift is caught."""
     return json.dumps({"targets": [
-        {"node": n, "jar": f"build/libs/0.1.0/grounded_villages-{n}-0.1.0.jar",
+        {"node": n, "jar": jar_path(n, version),
          "game_versions": [n.rsplit("-", 1)[0]], "loaders": [n.rsplit("-", 1)[1]],
          "version_number": f"grounded_villages-{n}"}
         for n in nodes
     ]})
 
 STONECUTTER_PROPS = textwrap.dedent('''
+    mod.id = "grounded_villages"
+    mod.version = "0.1.0"
     deps.fabric_loader = "0.19.5"
     loomx.loom_version = "1.17-SNAPSHOT"
 
@@ -322,6 +329,88 @@ class AllGreenTest(DoctorFixture):
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
         self.assertNotIn("FAIL", proc.stdout)
         self.assertIn("toolchain: all floors met", proc.stdout)
+
+
+class JarNamingDerivationTest(unittest.TestCase):
+    """GV-24: `tools/jar_naming.py` itself -- a plain library module, not "the command a person
+    runs" (rule 6 of the standard doesn't apply the same way it does to `doctor.py`/`map.py`), so
+    exercised directly rather than via subprocess."""
+
+    def test_jar_file_name_is_mod_dash_node_dash_version(self):
+        self.assertEqual("grounded_villages-1.21.1-fabric-0.1.0.jar", jar_file_name("1.21.1-fabric", "0.1.0"))
+
+    def test_jar_path_is_under_build_libs_version(self):
+        self.assertEqual(
+            "build/libs/0.1.0/grounded_villages-26.2-neoforge-0.1.0.jar",
+            jar_path("26.2-neoforge", "0.1.0"),
+        )
+
+    def test_a_new_node_needs_no_new_code_in_the_expression(self):
+        """The expression takes the node string as-is -- a node GV-17 adds (e.g. 1.21.9-fabric)
+        is covered by the same formula, nothing here to edit."""
+        self.assertEqual("grounded_villages-1.21.9-fabric-0.2.0.jar", jar_file_name("1.21.9-fabric", "0.2.0"))
+
+    def test_a_different_mod_id_is_honoured(self):
+        self.assertEqual("other_mod-1.21.1-fabric-0.1.0.jar", jar_file_name("1.21.1-fabric", "0.1.0", mod_id="other_mod"))
+
+
+class TargetJarsTest(DoctorFixture):
+    """GV-24: `docs/modrinth/targets.json`'s own `jar` field must match `jar_naming.jar_path`'s
+    derivation from `stonecutter.properties.toml`'s `mod.id`/`mod.version` -- the exact drift this
+    ticket was filed over (the build wrote a different jar name than `targets.json`, `just
+    publish-dry` and `release_notes.py` expected)."""
+
+    def setUp(self):
+        super().setUp()
+        write_provisioned_jdk(self.gradle_home / "jdks", "eclipse_adoptium-17", "17.0.20.1", "17.0.20.1")
+        write_provisioned_jdk(self.gradle_home / "jdks", "eclipse_adoptium-21", "21.0.12.1", "21.0.12.1")
+        write_provisioned_jdk(self.gradle_home / "jdks", "eclipse_adoptium-25", "25.0.1", "25.0.1", macos=False)
+
+    def test_every_target_jar_matching_the_derivation_passes(self):
+        proc = self.run_doctor()
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        for node in SETTINGS_GRADLE_NODES:
+            self.assertIn(f"ok   target jar ({node}): 'build/libs/0.1.0/grounded_villages-{node}-0.1.0.jar'", proc.stdout)
+
+    def test_one_drifted_jar_field_fails_naming_only_that_node(self):
+        """The GV-24 bug shape itself: one node's `jar` field points at a name the build no
+        longer (or not yet) produces -- e.g. the old `<mod>-<loader>-<version>+<mc>.jar` order."""
+        doc = json.loads(targets_json(SETTINGS_GRADLE_NODES))
+        for t in doc["targets"]:
+            if t["node"] == "1.21.1-fabric":
+                t["jar"] = "build/libs/0.1.0/grounded_villages-fabric-0.1.0+1.21.1.jar"
+        (self.root / "docs" / "modrinth" / "targets.json").write_text(json.dumps(doc))
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn(
+            "FAIL  target jar (1.21.1-fabric): 'build/libs/0.1.0/grounded_villages-fabric-0.1.0+1.21.1.jar'; "
+            "expected 'build/libs/0.1.0/grounded_villages-1.21.1-fabric-0.1.0.jar'",
+            proc.stdout,
+        )
+        # every other node's own jar field is unaffected by this one node's drift
+        self.assertIn("ok   target jar (1.20.1-fabric)", proc.stdout)
+
+    def test_a_bumped_mod_version_not_yet_regenerated_into_targets_json_fails(self):
+        """`targets.json` still pinned to the old release version after `mod.version` moves on --
+        every node drifts at once, each named."""
+        bumped = STONECUTTER_PROPS.replace('mod.version = "0.1.0"', 'mod.version = "0.2.0"')
+        (self.root / "stonecutter.properties.toml").write_text(bumped)
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn(
+            "FAIL  target jar (26.2-neoforge): 'build/libs/0.1.0/grounded_villages-26.2-neoforge-0.1.0.jar'; "
+            "expected 'build/libs/0.2.0/grounded_villages-26.2-neoforge-0.2.0.jar'",
+            proc.stdout,
+        )
+
+    def test_missing_mod_identity_fails(self):
+        without_identity = "\n".join(
+            line for line in STONECUTTER_PROPS.splitlines() if "mod.id" not in line and "mod.version" not in line
+        )
+        (self.root / "stonecutter.properties.toml").write_text(without_identity)
+        proc = self.run_doctor()
+        self.assertEqual(5, proc.returncode, proc.stdout + proc.stderr)
+        self.assertIn("FAIL  target jars: mod.id/mod.version missing from stonecutter.properties.toml", proc.stdout)
 
 
 if __name__ == "__main__":

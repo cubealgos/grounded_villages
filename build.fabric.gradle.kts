@@ -10,6 +10,16 @@ plugins {
 version = "${property("mod.version")}+${sc.current.version}"
 base.archivesName = "${property("mod.id") as String}-fabric"
 
+// GV-24: the produced jar's actual file name, decoupled from `version`'s own semver-metadata
+// style above (kept as-is -- it still feeds e.g. the mod jar's manifest attributes) --
+// `docs/spec/operations/release.md`'s own `grounded_villages-<mc>-<loader>-<version>.jar` scheme,
+// the one expression `buildSrc/src/main/kotlin/GvJarNaming.kt` also gives `buildAndCollect` below,
+// `tools/jar_naming.py` and `tools/doctor.py`'s `check_targets`. `sc.current.project` is already
+// "<mc>-<loader>" (settings.gradle.kts's own `match()` helper), so a node a later ticket adds
+// (GV-17) is covered with nothing to edit here.
+val jarFileName = gvJarFileName(property("mod.id") as String, sc.current.project, property("mod.version") as String)
+loomx.modJar.configure { archiveFileName.set(jarFileName) }
+
 // docs/spec/contracts/platform-matrix.md "Per-row toolchain": 1.20.1 -> 17, 1.21.1 -> 21,
 // 26.2 -> 25 (fabric-loom's own `requiredJava` table, quoted in the same contract).
 val requiredJava: JavaVersion = when {
