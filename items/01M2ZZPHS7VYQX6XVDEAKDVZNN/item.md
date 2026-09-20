@@ -23,12 +23,12 @@ this ticket must uncomment and verify it, not assume it works by default.
 
 ## Acceptance criteria
 
-- [ ] Forge 1.20.1 node compiles against Mojang mappings (Parchment-over-official, per
+- [x] Forge 1.20.1 node compiles against Mojang mappings (Parchment-over-official, per
   `legacyforge`'s default)
-- [ ] the runtime jar and its refmap are correctly reobfuscated to SRG
-- [ ] a game test proves the mixin hook fires on this leg, using the same scenarios as GV-11
-- [ ] `mods.toml` and the jar manifest's `MixinConfigs` are wired correctly
-- [ ] `NOTICE` records Forge's own licence, verified rather than assumed (per `DEC-003`'s
+- [x] the runtime jar and its refmap are correctly reobfuscated to SRG
+- [x] a game test proves the mixin hook fires on this leg, using the same scenarios as GV-11
+- [x] `mods.toml` and the jar manifest's `MixinConfigs` are wired correctly
+- [x] `NOTICE` records Forge's own licence, verified rather than assumed (per `DEC-003`'s
   "to-verify" flag)
 
 ## Constraints and prior findings
