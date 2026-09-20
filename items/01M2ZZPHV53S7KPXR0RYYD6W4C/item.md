@@ -23,7 +23,7 @@ decision-rule closure of this question.
 
 ## Acceptance criteria
 
-- [ ] every child ticket of this epic reaches `done`
+- [x] every child ticket of this epic reaches `done`
 
 ## Constraints and prior findings
 
