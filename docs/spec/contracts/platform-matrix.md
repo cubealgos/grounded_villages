@@ -10,19 +10,20 @@ category: "grounded_villages"
 
 | Combination | State | Ships in |
 |---|---|---|
-| Fabric, 1.21.1 | planned | Wave 1 |
-| NeoForge, 1.21.1 | planned | Wave 1 |
-| Fabric, 26.2 | planned | Wave 1 |
-| NeoForge, 26.2 | planned | Wave 1 |
-| Forge, 1.20.1 | planned | Wave 2 |
-| Fabric, 1.21.4 | planned | Wave 3 |
-| NeoForge, 1.21.4 | planned | Wave 3 |
-| Fabric, 1.21.5 | planned | Wave 3 |
-| NeoForge, 1.21.5 | planned | Wave 3 |
-| Fabric, 1.21.8 | planned | Wave 3 |
-| NeoForge, 1.21.8 | planned | Wave 3 |
+| Fabric, 1.21.1 | built, CI green; ships in 1.0 (GV-21) | Wave 1 |
+| NeoForge, 1.21.1 | built, CI green; ships in 1.0 (GV-21) | Wave 1 |
+| Fabric, 26.2 | built, CI green; ships in 1.0 (GV-21) | Wave 1 |
+| NeoForge, 26.2 | built, CI green; ships in 1.0 (GV-21) | Wave 1 |
+| Fabric, 1.20.1 | built, proven at GV-2 and GV-24; ships with Wave 2 | Wave 2 |
+| Forge, 1.20.1 | built, CI green; ships in 1.0 (GV-21) | Wave 2 |
+| Fabric, 1.21.4 | built, CI green; ships in 1.0 (GV-21) | Wave 3 |
+| NeoForge, 1.21.4 | built, CI green; ships in 1.0 (GV-21) | Wave 3 |
+| Fabric, 1.21.5 | built, CI green; ships in 1.0 (GV-21) | Wave 3 |
+| NeoForge, 1.21.5 | built, CI green; ships in 1.0 (GV-21) | Wave 3 |
+| Fabric, 1.21.8 | built, CI green; ships in 1.0 (GV-21) | Wave 3 |
+| NeoForge, 1.21.8 | built, CI green; ships in 1.0 (GV-21) | Wave 3 |
 
-Every row is `planned` — no code and no repository exist yet
+Every row is built and green in CI as of 2026-09-21 (GV-2, GV-15, GV-17); `planned` becomes `shipped` when GV-21 publishes the twelve versions
 (`decisions/DEC-004-versions-and-toolchain.md`). Waves 1–2 (six nodes) are confirmed build targets
 per `multi-loader-multi-version-mods-2026.md`'s "Grounded Villages" section and
 `village-jigsaw-placement-1-20-1-to-26-2.md`, both added 2026-09-20 after this spec's first draft.
@@ -45,6 +46,7 @@ four ever qualified.
 | NeoForge, 1.21.1 | 21 | MDG `2.0.147` | NeoForge `21.1.251` |
 | Fabric, 26.2 | 25 | `fabric-loom` `1.17-SNAPSHOT` | Fabric API `0.161.0+26.2` |
 | NeoForge, 26.2 | 25 | MDG `2.0.147` | NeoForge `26.2.0.88` |
+| Fabric, 1.20.1 | 17 | `fabric-loom` `1.17-SNAPSHOT` | Fabric API `0.92.12+1.20.1` |
 | Forge, 1.20.1 | **17** | MDG `2.0.147` + `legacyforge` addon | Forge `47.4.23` (verified GV-2, see below); compiled against Mojang mappings, runtime jar reobfuscated to SRG via Mixin's refmap step; Fabric API precedent for this MC generation is `0.92.12+1.20.1` (the Fabric leg's own pin, not Forge's) |
 | Fabric, 1.21.4 (Wave 3, GV-17) | 21 | `fabric-loom` `1.17-SNAPSHOT` | Fabric API `0.119.4+1.21.4` |
 | NeoForge, 1.21.4 (Wave 3, GV-17) | 21 | MDG `2.0.147` | NeoForge `21.4.157` |

@@ -26,9 +26,12 @@ Each notes file is built from three pieces:
   same way `tools/doctor.py`'s own `JAVA_ROWS`/`COORDINATE_ROWS` mirror that same spec file (the
   spec's tables are prose markdown, not a machine-readable source this tool could parse instead).
 - **`REL-REQ-004`'s wave statement** ("each wave's first release notes state plainly which
-  combinations are new in that wave and which ... remain planned"), derived from `NODES`' own
-  `wave` field (the platform matrix's "Ships in" column) -- not from any actual Modrinth publish
-  history, since this repository has not published a version yet.
+  combinations are new in that wave and which ... remain planned"). GV-21: the 1.0.0 release ships
+  every node `NODES` lists together (`docs/spec/contracts/platform-matrix.md`, synced 2026-09-21,
+  every row `built`/`ships in 1.0`), so every target's wave statement now reads the same way --
+  everything in `NODES` is new, nothing remains planned; `wave_statement`'s own docstring covers
+  why this is no longer a per-node `wave`-field comparison. Still not from any actual Modrinth
+  publish history, since this repository has not published a version yet.
 """
 from __future__ import annotations
 
@@ -41,6 +44,7 @@ from pathlib import Path
 DEFAULT_TARGETS = Path("docs/modrinth/targets.json")
 DEFAULT_CHANGELOG = Path("CHANGELOG.md")
 DEFAULT_OUT_DIR = Path("dist/notes")
+DEFAULT_CHECKSUMS = Path("dist/SHA256SUMS")
 
 # One row per docs/spec/contracts/platform-matrix.md "Target combinations, in build order" /
 # "Per-row toolchain" / "Wave 3 nodes" tables. `combination` is the matrix's own "<Loader>, <mc>"
@@ -51,18 +55,13 @@ DEFAULT_OUT_DIR = Path("dist/notes")
 # `library_version` below. `library`/`library_version` are the "<Fabric API | NeoForge | Forge>
 # <version>" clause.
 #
-# `1.20.1-fabric`'s `wave` is this tool's own judgment call, not a value the spec states outright:
-# `docs/spec/contracts/platform-matrix.md`'s "Target combinations" and "Per-row toolchain" tables
-# never give Fabric-on-1.20.1 its own row at all (only "Forge, 1.20.1 | planned | Wave 2" and a
-# passing "Fabric API precedent for this MC generation is 0.92.12+1.20.1" aside) -- yet it is a
-# real, already-built twelfth Stonecutter node (`settings.gradle.kts`'s `match("1.20.1", "fabric",
-# "forge")`, one call registering both loaders together; `git log` shows both landed in the same
-# GV-2 commit, "six version nodes building real jars"; `tools/doctor.py`'s own `COORDINATE_ROWS`
-# already tracks its Fabric API pin). Wave 2 here because it shares that one `match()` call and
-# Minecraft rung with Forge 1.20.1 -- the best-supported reading, not a documented fact. This is a
-# genuine gap in `platform-matrix.md`'s own enumeration tables (a missing row, not an open design
-# question this tool should be settling on its own); flagged for a spec fix rather than decided
-# silently and left unrecorded.
+# `1.20.1-fabric`'s `wave` was this tool's own judgment call as of GV-20 -- `platform-matrix.md`'s
+# enumeration tables did not give Fabric-on-1.20.1 its own row at all, even though it was already a
+# real, built twelfth Stonecutter node. GV-21's spec sync closed that gap: the vault's
+# `platform-matrix.md` now lists "Fabric, 1.20.1 | built, proven at GV-2 and GV-24; ships with Wave
+# 2 | Wave 2" explicitly, confirming Wave 2 was the right guess. `wave` is otherwise no longer used
+# for the new-vs-planned split (see `wave_statement` below); it stays as the documented build-order
+# record only.
 NODES: dict[str, dict[str, object]] = {
     "1.20.1-fabric": dict(mc="1.20.1", combination="Fabric, 1.20.1", wave=2,
                            loader="Fabric Loader", loader_version="0.19.5",
@@ -140,17 +139,58 @@ def tested_line(info: dict) -> str:
 
 def wave_statement(info: dict) -> str:
     """REL-REQ-004: "each wave's first release notes state plainly which combinations are new in
-    that wave and which structure/version combinations remain planned" -- derived purely from
-    `NODES`' own `wave` field (the platform matrix's "Ships in" column), not from any actual
-    Modrinth publish history (none exists yet)."""
-    wave = info["wave"]
-    new = [n["combination"] for n in NODES.values() if n["wave"] == wave]
-    planned = [n["combination"] for n in NODES.values() if n["wave"] > wave]
-    planned_text = "; ".join(planned) if planned else "none"
-    return f"New in this release: {'; '.join(new)}. Still planned: {planned_text}."
+    that wave and which structure/version combinations remain planned".
+
+    GV-21 finding: this used to compare each node's own `wave` field against every other node's,
+    so a Wave 1 node's own notes would list every later-wave combination as "still planned" even
+    once those later waves had actually shipped in the same release -- correct only while releases
+    tracked one wave at a time. `docs/spec/contracts/platform-matrix.md` (synced 2026-09-21, GV-21)
+    now shows every row `built` and `ships in 1.0`: the 1.0.0 release ships every node in `NODES`
+    together, so every node's own wave statement is the same one -- everything `NODES` lists is
+    new in this release, nothing remains planned. `wave` stays on each entry only as the historical
+    build-order record (Wave 1/2/3, still read by nothing else here); a future release that again
+    ships less than everything in `NODES` at once is the case this function would need to branch
+    on again, not assumed here since no such release exists yet."""
+    all_combinations = [n["combination"] for n in NODES.values()]
+    return f"New in this release: {'; '.join(all_combinations)}. Still planned: none."
 
 
-def notes_for(target: dict, changelog_body: str) -> str:
+def load_checksums(path: Path) -> dict[str, str]:
+    """GV-21: `dist/SHA256SUMS` (`shasum -a 256 *.jar` over `chiseledBuild`'s own collected
+    twelve-jar output directory, `<mod>/<mod version>/`), the release checksum
+    `operations/compliance.md` "Supply chain and release integrity" requires in the release notes.
+    Maps jar basename -> hex digest; empty (not missing -- a dry run before a real build has run
+    yet is a normal state, `files_line` below just omits the section) when the file does not
+    exist, same "absent is not fatal" shape `tools/release_notes.py`'s own single-jar checksum
+    lookup already uses."""
+    if not path.exists():
+        return {}
+    checksums: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        digest, _, name = line.partition("  ")
+        if digest and name:
+            checksums[name.strip()] = digest.strip()
+    return checksums
+
+
+def files_line(target: dict, checksums: dict[str, str]) -> str | None:
+    """REL-REQ per `operations/compliance.md`: each jar's own checksum, in its own notes file --
+    not the whole `SHA256SUMS` list, so a reader of one target's notes sees only the one hash that
+    actually verifies that one download."""
+    jar = target.get("jar")
+    if not jar:
+        return None
+    jar_name = Path(jar).name
+    digest = checksums.get(jar_name)
+    if not digest:
+        return None
+    return f"## Files\n\n`{jar_name}`, SHA-256 `{digest}`."
+
+
+def notes_for(target: dict, changelog_body: str, checksums: dict[str, str]) -> str:
     node = target.get("node")
     info = NODES.get(node)
     if info is None:
@@ -160,17 +200,20 @@ def notes_for(target: dict, changelog_body: str) -> str:
     if changelog_body:
         parts += [changelog_body, ""]
     parts += [tested_line(info), "", wave_statement(info), ""]
+    files = files_line(target, checksums)
+    if files:
+        parts += [files, ""]
     return "\n".join(parts).rstrip() + "\n"
 
 
-def write_all(targets: list[dict], changelog_body: str, out_dir: Path) -> list[Path]:
+def write_all(targets: list[dict], changelog_body: str, out_dir: Path, checksums: dict[str, str]) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for target in targets:
         version_number = target.get("version_number")
         if not version_number:
             raise SystemExit(f"target_notes: target for node {target.get('node')!r} has no version_number")
-        text = notes_for(target, changelog_body)
+        text = notes_for(target, changelog_body, checksums)
         out_path = out_dir / f"{version_number}.md"
         out_path.write_text(text, encoding="utf-8")
         written.append(out_path)
@@ -183,6 +226,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--targets", type=Path, default=DEFAULT_TARGETS, help="targets file, relative to --root")
     parser.add_argument("--changelog", type=Path, default=DEFAULT_CHANGELOG, help="CHANGELOG.md, relative to --root")
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR, help="output directory, relative to --root")
+    parser.add_argument("--checksums", type=Path, default=DEFAULT_CHECKSUMS, help="dist/SHA256SUMS, relative to --root")
     args = parser.parse_args(argv)
     root = args.root.resolve()
 
@@ -191,8 +235,9 @@ def main(argv: list[str] | None = None) -> int:
     if not changelog_path.exists():
         raise SystemExit(f"target_notes: changelog not found: {changelog_path}")
     _, body = changelog_section(changelog_path.read_text(encoding="utf-8"))
+    checksums = load_checksums(root / args.checksums)
 
-    written = write_all(targets, body, root / args.out_dir)
+    written = write_all(targets, body, root / args.out_dir, checksums)
     for path in written:
         print(path.relative_to(root))
     return 0
