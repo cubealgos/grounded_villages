@@ -43,7 +43,7 @@ Parses and serialises grounded_villages.json on top of ConfigJson (`docs/spec/do
     (`CONFIG-REQ-004`), empty when the file was entirely well-formed and in range file fell back to shipped defaults (CONFIG-FAIL-001); config is still ConfigDefaults#defaults() in that case
 
 ### `class ConfigDefaults` — `src/main/java/grounded_villages/config/ConfigDefaults.java`
-The shipped defaults: `docs/spec/domains/config.md` §3's proposed default JSON, verbatim, as Java constants -- one source of truth ConfigCodec reads to fall back a missing or wrong-typed key, and ConfigModel's own compact constructors read to fall back a null nested record.
+The shipped defaults: `docs/spec/domains/config.md` §3's confirmed default JSON, verbatim, as Java constants -- one source of truth ConfigCodec reads to fall back a missing or wrong-typed key, and ConfigModel's own compact constructors read to fall back a null nested record.
 - `int CURRENT_SCHEMA_VERSION` — The config file's own schema version at 1.0 (`docs/spec/contracts/data-contract.md`).
 - `String FILE_NAME` — The file's name inside the game's config directory (`decisions/DEC-008-config-file.md`).
 - `List<String> DEFAULT_STRUCTURE_TAGS`

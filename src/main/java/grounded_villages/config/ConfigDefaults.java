@@ -3,12 +3,18 @@ package grounded_villages.config;
 import java.util.List;
 
 /**
- * The shipped defaults: `docs/spec/domains/config.md` §3's proposed default JSON, verbatim, as
+ * The shipped defaults: `docs/spec/domains/config.md` §3's confirmed default JSON, verbatim, as
  * Java constants -- one source of truth {@link ConfigCodec} reads to fall back a missing or
  * wrong-typed key, and {@link ConfigModel}'s own compact constructors read to fall back a
- * {@code null} nested record. **Every numeric value below is proposed by Claude, 2026-09-20,
- * Kevin to confirm at the first ticket** (`docs/spec/README.md` "Open questions gathered") --
- * config-overridable regardless of outcome, and this class is the one place they would change.
+ * {@code null} nested record. **Every numeric value below is confirmed by Kevin, 2026-09-21
+ * (GV-27)** -- config-overridable regardless of outcome, and this class is the one place they
+ * would change. The city tier's jigsaw depth is {@code 9}, not the originally proposed {@code
+ * 10}: GV-8's seed-18 baseline sweep rolled a depth-10 city at 718 pieces in 28.6s, the largest
+ * and slowest single village this fleet has ever measured, at a depth {@link
+ * grounded_villages.tier.TierRoller}'s own performance-cap model judged well inside the cap --
+ * {@code docs/baseline/README.md} "GV-8: tier rolling" has the finding,
+ * `decisions/DEC-006-size-tiers.md`'s 2026-09-21 amendment has Kevin's ruling. A live, hard
+ * piece-count bound stays a later ticket.
  */
 final class ConfigDefaults {
 
@@ -50,7 +56,7 @@ final class ConfigDefaults {
     static final int DEFAULT_TIER_JIGSAW_DEPTH_HAMLET = 3;
     static final int DEFAULT_TIER_JIGSAW_DEPTH_VILLAGE = 6;
     static final int DEFAULT_TIER_JIGSAW_DEPTH_TOWN = 8;
-    static final int DEFAULT_TIER_JIGSAW_DEPTH_CITY = 10;
+    static final int DEFAULT_TIER_JIGSAW_DEPTH_CITY = 9;
     static final int DEFAULT_TIER_MAX_DISTANCE_HAMLET = 80;
     static final int DEFAULT_TIER_MAX_DISTANCE_VILLAGE = 96;
     static final int DEFAULT_TIER_MAX_DISTANCE_TOWN = 128;

@@ -26,13 +26,13 @@ The single hand-rolled JSON file every other domain reads its tunable values fro
 
 ## 3. Enumerations
 
-### Schema, with proposed defaults
+### Schema, with confirmed defaults
 
-**Every default value below is proposed by Claude, 2026-09-20, Kevin to confirm at the first
-ticket, tuned against the headless harness sweep (`operations/testing.md`) — not measured against a
-real world yet.** The mechanism each key governs is decided; the number is not.
+**Every default value below is confirmed by Kevin, 2026-09-21 (GV-27), tuned against the headless
+harness sweep (`operations/testing.md`).** The mechanism each key governs, and the number, are both
+decided.
 
-| Key | Type | Domain | Meaning | Default (proposed) |
+| Key | Type | Domain | Meaning | Default |
 |---|---|---|---|---|
 | `schema_version` | integer | — | Forward-compatibility marker, incremented on any breaking key change (`contracts/data-contract.md`). | `1` |
 | `scope.structure_tags` | list of string | — | Structure tags this mod acts on (`decisions/DEC-007-village-tag-scope.md`). | `["minecraft:village"]` |
@@ -46,12 +46,12 @@ real world yet.** The mechanism each key governs is decided; the number is not.
 | `piece.max_height_deviation` | integer (blocks) | `PIECE` | Per-piece tolerance from the village's start height. | `6` |
 | `tier.enabled` | boolean | `TIER` | Whether tier rolling runs at all; **where** `false`, every village rolls `village` (vanilla-like), matching pre-mod behaviour for size. | `true` |
 | `tier.weights.hamlet` / `.village` / `.town` / `.city` | float | `TIER` | Relative roll weight per tier. | `30` / `45` / `20` / `5` |
-| `tier.jigsaw_depth.hamlet` / `.village` / `.town` / `.city` | integer | `TIER` | `maxDepth` fed to vanilla's jigsaw assembly per tier. | `3` / `6` / `8` / `10` |
+| `tier.jigsaw_depth.hamlet` / `.village` / `.town` / `.city` | integer | `TIER` | `maxDepth` fed to vanilla's jigsaw assembly per tier. | `3` / `6` / `8` / `9` |
 | `tier.max_distance.hamlet` / `.village` / `.town` / `.city` | integer (blocks) | `TIER` | `max_distance_from_center` per tier; `town`/`city` sit at the 128-block hard cap (`decisions/DEC-006-size-tiers.md`). | `80` / `96` / `128` / `128` |
 | `tier.hamlet_minimum_pieces` | integer | `TIER` | Non-street piece floor a shrinking village must clear to stay a `hamlet` (`decisions/DEC-010-shrink-move-vanilla.md`). | `4` |
 | `tier.performance_cap` | integer | `TIER` | Absolute ceiling on generated piece count per village, regardless of tier. | `3×` vanilla's own piece count |
 
-### Default JSON (thresholds still proposed; search_step/search_attempts tuned at GV-6's harness sweep)
+### Default JSON (confirmed by Kevin, 2026-09-21 (GV-27); search_step/search_attempts tuned at GV-6's harness sweep)
 
 ```json
 {
@@ -72,7 +72,7 @@ real world yet.** The mechanism each key governs is decided; the number is not.
   "tier": {
     "enabled": true,
     "weights": { "hamlet": 30, "village": 45, "town": 20, "city": 5 },
-    "jigsaw_depth": { "hamlet": 3, "village": 6, "town": 8, "city": 10 },
+    "jigsaw_depth": { "hamlet": 3, "village": 6, "town": 8, "city": 9 },
     "max_distance": { "hamlet": 80, "village": 96, "town": 128, "city": 128 },
     "hamlet_minimum_pieces": 4,
     "performance_cap_multiplier": 3.0
@@ -127,7 +127,7 @@ None. The schema table above is the complete enumeration; there is no state mach
 
 | Question | Blocks | Decided by |
 |---|---|---|
-| Whether every §3 default holds up once measured by the headless harness sweep | Every `REQ` above that reads a default | **Proposed by Claude, 2026-09-20; `site.search_step`/`site.search_attempts` re-tuned by Claude, 2026-09-20 (GV-6), from the same 10-seed sweep — `docs/baseline/README.md`'s before/after table and trade-off writeup is the record.** Every other key (including `site.max_height_spread`/`max_water_fraction`, left at the original proposal per GV-6's own ticket scope) remains Kevin's to confirm; config-overridable regardless of outcome |
+| Whether every §3 default holds up once measured by the headless harness sweep | Every `REQ` above that reads a default | **Confirmed by Kevin, 2026-09-21 (GV-27); `site.search_step`/`site.search_attempts` re-tuned by Claude, 2026-09-20 (GV-6), from the same 10-seed sweep — `docs/baseline/README.md`'s before/after table and trade-off writeup is the record.** Every key is confirmed as shipped; config-overridable regardless of outcome |
 | Whether a live-reload command or a config-screen-mod integration (Cloth Config, etc.) should ship later | `CONFIG-REQ-005` | deferred, not cut — a later ticket, same restraint `villager_voices` shows for its own config surface |
 
 ~~The specific reasoning for "no config library" across all three loaders~~ — resolved:

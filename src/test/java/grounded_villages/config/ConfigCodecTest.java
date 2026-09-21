@@ -55,7 +55,7 @@ final class ConfigCodecTest {
                   "tier": {
                     "enabled": true,
                     "weights": { "hamlet": 30, "village": 45, "town": 20, "city": 5 },
-                    "jigsaw_depth": { "hamlet": 3, "village": 6, "town": 8, "city": 10 },
+                    "jigsaw_depth": { "hamlet": 3, "village": 6, "town": 8, "city": 9 },
                     "max_distance": { "hamlet": 80, "village": 96, "town": 128, "city": 128 },
                     "hamlet_minimum_pieces": 4,
                     "performance_cap_multiplier": 3.0

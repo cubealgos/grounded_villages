@@ -32,7 +32,7 @@ final class TierRollerTest {
         return tierConfig(
                 true,
                 new ConfigModel.TierWeights(30, 45, 20, 5),
-                new ConfigModel.TierBudget(3, 6, 8, 10),
+                new ConfigModel.TierBudget(3, 6, 8, 9),
                 new ConfigModel.TierBudget(80, 96, 128, 128),
                 3.0);
     }
@@ -114,21 +114,21 @@ final class TierRollerTest {
 
     @Test
     void aTierWithinThePerformanceCapKeepsItsOwnConfiguredDepth() {
-        ConfigModel.Tier config = defaultTierConfig(); // cap = 3x117 = 351 -> max depth ~18, well above city's 10
+        ConfigModel.Tier config = defaultTierConfig(); // cap = 3x117 = 351 -> max depth ~18, well above city's 9
         TierAssignment city = TierRoller.roll(config, drawFor(Tier.CITY, config.weights()));
 
         assertEquals(Tier.CITY, city.tier());
-        assertEquals(10, city.jigsawDepth());
+        assertEquals(9, city.jigsawDepth());
     }
 
     @Test
     void aRollWhoseBudgetExceedsThePerformanceCapIsClampedNotDenied() {
         // A deliberately tiny cap multiplier (the config floor, 0.1x) forces clamping: expected
-        // cap = 117 * 0.1 = 11.7 pieces, well under city's un-clamped depth-10 budget.
+        // cap = 117 * 0.1 = 11.7 pieces, well under city's un-clamped depth-9 budget.
         ConfigModel.Tier config = tierConfig(
                 true,
                 new ConfigModel.TierWeights(30, 45, 20, 5),
-                new ConfigModel.TierBudget(3, 6, 8, 10),
+                new ConfigModel.TierBudget(3, 6, 8, 9),
                 new ConfigModel.TierBudget(80, 96, 128, 128),
                 0.1);
 
@@ -136,7 +136,7 @@ final class TierRollerTest {
 
         // TIER-FAIL-001: still labelled and shaped as its rolled tier -- just capped.
         assertEquals(Tier.CITY, city.tier());
-        assertTrue(city.jigsawDepth() < 10, "expected the depth to be clamped below city's own configured 10");
+        assertTrue(city.jigsawDepth() < 9, "expected the depth to be clamped below city's own configured 9");
         assertTrue(city.jigsawDepth() >= 0);
     }
 
@@ -146,7 +146,7 @@ final class TierRollerTest {
         ConfigModel.Tier config = tierConfig(
                 true,
                 new ConfigModel.TierWeights(30, 45, 20, 5),
-                new ConfigModel.TierBudget(3, 6, 8, 10),
+                new ConfigModel.TierBudget(3, 6, 8, 9),
                 new ConfigModel.TierBudget(80, 96, 128, 128),
                 100.0);
 
@@ -189,7 +189,7 @@ final class TierRollerTest {
         ConfigModel.Tier disabled = tierConfig(
                 false,
                 new ConfigModel.TierWeights(30, 45, 20, 5),
-                new ConfigModel.TierBudget(3, 6, 8, 10),
+                new ConfigModel.TierBudget(3, 6, 8, 9),
                 new ConfigModel.TierBudget(80, 96, 128, 128),
                 3.0);
 
