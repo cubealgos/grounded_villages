@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-"""Render docs/modrinth/icon.png: the village bell on the cubealgos navy badge Create-family
-add-ons share (GV-23).
+"""Render docs/modrinth/icon.png: the village bell on the cubealgos navy badge (GV-23).
+
+Kevin's icon rulings, 2026-09-21: Grounded Villages is not a Create Fly add-on, so its badge is
+plain navy -- no blueprint grid, no centre glow (`badge(grid=False)`) -- and, as a pixel-art item
+render, the bell sits at 70% of the previous 320px fit box (`FIT = 0.7`, `EFFECTIVE_BOX` = 224px).
 
 Grounded Villages adds no block or item of its own (00-context.md: placement only, no new
 building) -- the icon's subject is vanilla's own village bell, `minecraft:bell`, read straight
@@ -47,7 +50,8 @@ the badge and shrunk):
 - `flat-sprite`: the flat, pre-baked `textures/item/bell.png` (the actual GUI icon, unmistakably
   bell-shaped with a visible hanger and flare) composed exactly the way create_villager_customers'
   `tools/icon.py` composes the vanilla emerald -- cropped to its alpha bounding box, scaled
-  without smoothing to the same 320px fit box, with the same white outline and soft shadow.
+  without smoothing to the same fit box (`EFFECTIVE_BOX`, 70% of the siblings' 320px), with the
+  same white outline and soft shadow, on the plain navy badge rather than the siblings' grid.
 - `bell-with-frame`: the same bytecode-derived bell cuboids, plus the real wooden post-and-bar
   frame the bell hangs from, loaded straight from `bell_floor.json`'s own three elements (so it
   is composed, not re-derived) -- context that reads as "a hanging bell" rather than a loose block.
@@ -364,9 +368,16 @@ GRID = (52, 76, 128, 255)
 OUTLINE = (255, 255, 255, 235)
 SHADOW = (20, 50, 90, 130)
 FIT_BOX = 320  # smooth mode, already-rendered subject, as the siblings use
+FIT = 0.7  # Kevin, 2026-09-21: pixel-art items at 70% of the previous fit box
+EFFECTIVE_BOX = round(FIT_BOX * FIT)
 
 
-def badge() -> Image.Image:
+def badge(grid: bool = True) -> Image.Image:
+    """The round badge: white rim, pale band, dark ring, blueprint disc. `grid=True` (default)
+    adds the half-alpha blueprint grid and its centre glow, clipped to the disc -- the Create
+    add-on theme the siblings share. `grid=False` (Kevin, 2026-09-21: Grounded Villages is not a
+    Create Fly add-on) returns the plain navy disc with no grid and no glow, mirroring the fleet
+    tool's `navy-badge.py --no-grid`."""
     big = BADGE_SIZE * BADGE_SUPERSAMPLE
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
@@ -376,8 +387,11 @@ def badge() -> Image.Image:
         draw.ellipse((c - r, c - r, c + r, c + r), fill=colour)
     img = img.resize((BADGE_SIZE, BADGE_SIZE), Image.LANCZOS)
 
-    grid = Image.new("RGBA", (BADGE_SIZE, BADGE_SIZE), (0, 0, 0, 0))
-    g = ImageDraw.Draw(grid)
+    if not grid:
+        return img
+
+    grid_layer = Image.new("RGBA", (BADGE_SIZE, BADGE_SIZE), (0, 0, 0, 0))
+    g = ImageDraw.Draw(grid_layer)
     for k in range(-4, 5):
         p = BADGE_CENTRE + k * 48
         g.line((p, 0, p, BADGE_SIZE), fill=GRID, width=3)
@@ -387,7 +401,7 @@ def badge() -> Image.Image:
         (BADGE_CENTRE - 120, BADGE_CENTRE - 120, BADGE_CENTRE + 120, BADGE_CENTRE + 120),
         fill=(34, 48, 92, 150))
     glow = glow.filter(ImageFilter.GaussianBlur(50))
-    inner = Image.alpha_composite(glow, grid)
+    inner = Image.alpha_composite(glow, grid_layer)
     mask = Image.new("L", (BADGE_SIZE, BADGE_SIZE), 0)
     ImageDraw.Draw(mask).ellipse(
         (BADGE_CENTRE - 238, BADGE_CENTRE - 238, BADGE_CENTRE + 238, BADGE_CENTRE + 238),
@@ -397,7 +411,7 @@ def badge() -> Image.Image:
     return Image.alpha_composite(img, clipped)
 
 
-def compose(base: Image.Image, sprite: Image.Image, box: int = FIT_BOX) -> Image.Image:
+def compose(base: Image.Image, sprite: Image.Image, box: int = EFFECTIVE_BOX) -> Image.Image:
     """"smooth" mode: sprite is already-rendered/anti-aliased art (the bell's projection), so it
     is LANCZOS-scaled to fit, not zoomed like a raw pixel-art texture."""
     w, h = sprite.size
@@ -425,7 +439,7 @@ def compose(base: Image.Image, sprite: Image.Image, box: int = FIT_BOX) -> Image
     return img
 
 
-def compose_pixelart(base: Image.Image, raw: Image.Image, box: int = FIT_BOX) -> Image.Image:
+def compose_pixelart(base: Image.Image, raw: Image.Image, box: int = EFFECTIVE_BOX) -> Image.Image:
     """"pixelart" mode: sprite is a raw texture crop (the bell's flat item icon), so it is
     zoomed with nearest-neighbour to keep texels crisp, the way create_villager_customers'
     tools/icon.py composes the vanilla emerald -- ported here rather than re-imported so this
@@ -561,9 +575,11 @@ SIBLING_ICONS = [
 
 
 def compose_candidate(sprite: Image.Image, mode: str) -> Image.Image:
+    # Kevin, 2026-09-21: Grounded Villages is not a Create Fly add-on, so every candidate here
+    # renders on the plain navy badge (no blueprint grid) -- grid=False.
     if mode == "pixelart":
-        return compose_pixelart(badge(), sprite)
-    return compose(badge(), sprite)
+        return compose_pixelart(badge(grid=False), sprite)
+    return compose(badge(grid=False), sprite)
 
 
 def write_sheet(candidates: dict, path: Path) -> None:
