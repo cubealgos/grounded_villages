@@ -18,8 +18,8 @@ Kevin, 2026-09-21: the shipped defaults are confirmed as final (height spread 12
 
 ## Acceptance criteria
 
-- [ ] City depth 9 in code, spec, listing and changelog; no "proposed" marker left in the four domain files.
-- [ ] Seed 18 city piece count reported after the change; `just check` green; merged through a Forgejo pull request into `development`.
+- [x] City depth 9 in code, spec, listing and changelog; no "proposed" marker left in the four domain files.
+- [x] Seed 18 city piece count reported after the change; `just check` green; merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
