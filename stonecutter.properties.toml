@@ -7,7 +7,7 @@
 mod.id = "grounded_villages"
 mod.name = "Grounded Villages"
 mod.group = "grounded_villages"
-mod.version = "0.1.0"
+mod.version = "1.0.0"
 mod.license = "MIT"
 
 deps.fabric_loader = "0.19.5"

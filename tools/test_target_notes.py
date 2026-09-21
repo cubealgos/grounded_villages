@@ -9,7 +9,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from target_notes import NODES, changelog_section, notes_for, tested_line, wave_statement
+from target_notes import (NODES, changelog_section, files_line, load_checksums, notes_for,
+                           tested_line, wave_statement)
 
 TOOL = Path(__file__).resolve().parent / "target_notes.py"
 
@@ -91,58 +92,83 @@ class TestedLineTest(unittest.TestCase):
 
 
 class WaveStatementTest(unittest.TestCase):
-    def test_wave_1_names_its_own_four_combinations_and_the_rest_as_planned(self):
-        statement = wave_statement(NODES["1.21.1-fabric"])
-        self.assertIn("New in this release: Fabric, 1.21.1; NeoForge, 1.21.1; Fabric, 26.2; NeoForge, 26.2.", statement)
-        self.assertIn("Still planned:", statement)
-        self.assertIn("Forge, 1.20.1", statement)
-        self.assertIn("Fabric, 1.21.4", statement)
+    """GV-21: 1.0.0 ships every node in `NODES` together
+    (`docs/spec/contracts/platform-matrix.md`, every row `built`/`ships in 1.0`), so every node's
+    own wave statement now reads identically -- everything is new, nothing is still planned. The
+    old per-`wave`-field comparison (a Wave 1 node's notes claiming later waves were "still
+    planned" even once they had actually shipped in the same release) was GV-21's own found bug;
+    these tests assert the fixed, release-wide behaviour, not the old per-wave split."""
 
-    def test_wave_2_names_both_1_20_1_combinations_and_wave_3_is_still_planned(self):
-        statement = wave_statement(NODES["1.20.1-forge"])
-        self.assertIn("New in this release:", statement)
-        self.assertIn("Forge, 1.20.1", statement)
-        self.assertIn("Fabric, 1.20.1", statement)
-        self.assertIn("Fabric, 1.21.4", statement)
-        self.assertIn("NeoForge, 1.21.8", statement)
-
-    def test_wave_2_is_symmetric_between_its_own_two_combinations(self):
-        forge_statement = wave_statement(NODES["1.20.1-forge"])
-        fabric_statement = wave_statement(NODES["1.20.1-fabric"])
-        self.assertEqual(forge_statement, fabric_statement)
-
-    def test_last_wave_has_nothing_still_planned(self):
-        for node in ("1.21.4-fabric", "1.21.4-neoforge", "1.21.5-fabric", "1.21.5-neoforge",
-                      "1.21.8-fabric", "1.21.8-neoforge"):
+    def test_every_node_names_every_combination_as_new(self):
+        for node in NODES:
             statement = wave_statement(NODES[node])
+            for combination in (n["combination"] for n in NODES.values()):
+                self.assertIn(combination, statement, f"{node}: {statement}")
+
+    def test_every_node_has_nothing_still_planned(self):
+        for node, info in NODES.items():
+            statement = wave_statement(info)
             self.assertTrue(statement.endswith("Still planned: none."), f"{node}: {statement}")
 
-    def test_wave_3_new_list_names_all_six_wave_3_combinations(self):
-        statement = wave_statement(NODES["1.21.8-neoforge"])
-        for combination in ("Fabric, 1.21.4", "NeoForge, 1.21.4", "Fabric, 1.21.5",
-                             "NeoForge, 1.21.5", "Fabric, 1.21.8", "NeoForge, 1.21.8"):
-            self.assertIn(combination, statement)
+    def test_statement_is_identical_across_every_node(self):
+        statements = {wave_statement(info) for info in NODES.values()}
+        self.assertEqual(1, len(statements), statements)
 
 
 class NotesForTest(unittest.TestCase):
     def test_unknown_node_raises_naming_it(self):
         target = make_target("1.99.9-fabric")
         with self.assertRaises(SystemExit) as ctx:
-            notes_for(target, "body text")
+            notes_for(target, "body text", {})
         self.assertIn("1.99.9-fabric", str(ctx.exception))
 
     def test_notes_carry_title_changelog_tested_line_and_wave_statement(self):
         target = make_target("1.21.1-fabric")
-        text = notes_for(target, "- Some change (GV-1).")
+        text = notes_for(target, "- Some change (GV-1).", {})
         self.assertIn("# Grounded Villages 0.1.0 for 1.21.1-fabric", text)
         self.assertIn("- Some change (GV-1).", text)
         self.assertIn("Tested on Minecraft 1.21.1, Fabric Loader 0.19.5, Fabric API 0.116.17+1.21.1.", text)
         self.assertIn("New in this release:", text)
+        self.assertTrue(text.endswith("Still planned: none.\n"))
 
     def test_empty_changelog_body_is_omitted_cleanly(self):
         target = make_target("26.2-neoforge")
-        text = notes_for(target, "")
+        text = notes_for(target, "", {})
         self.assertIn("Tested on Minecraft 26.2, NeoForge 26.2.0.88.", text)
+
+    def test_no_files_section_without_a_matching_checksum(self):
+        target = make_target("1.21.1-fabric")
+        text = notes_for(target, "body text", {})
+        self.assertNotIn("## Files", text)
+
+    def test_files_section_carries_the_jar_s_own_checksum(self):
+        target = make_target("1.21.1-fabric")
+        checksums = {"grounded_villages-1.21.1-fabric-0.1.0.jar": "deadbeef"}
+        text = notes_for(target, "body text", checksums)
+        self.assertIn("## Files", text)
+        self.assertIn("`grounded_villages-1.21.1-fabric-0.1.0.jar`, SHA-256 `deadbeef`.", text)
+
+    def test_a_different_target_s_checksum_is_not_pulled_in(self):
+        target = make_target("1.21.1-fabric")
+        checksums = {"grounded_villages-26.2-neoforge-0.1.0.jar": "deadbeef"}
+        text = notes_for(target, "body text", checksums)
+        self.assertNotIn("## Files", text)
+        self.assertNotIn("deadbeef", text)
+
+
+class ChecksumsTest(unittest.TestCase):
+    def test_missing_file_is_an_empty_mapping_not_an_error(self):
+        self.assertEqual({}, load_checksums(Path("/no/such/dist/SHA256SUMS")))
+
+    def test_two_space_separated_lines_parse(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "SHA256SUMS"
+            path.write_text("aaaa  one.jar\nbbbb  two.jar\n")
+            checksums = load_checksums(path)
+        self.assertEqual({"one.jar": "aaaa", "two.jar": "bbbb"}, checksums)
+
+    def test_files_line_none_without_a_jar_field(self):
+        self.assertIsNone(files_line({}, {"x.jar": "aaaa"}))
 
 
 class MainCommandTest(unittest.TestCase):
@@ -180,9 +206,21 @@ class MainCommandTest(unittest.TestCase):
         text = (self.root / "dist" / "notes" / "grounded_villages-1.21.4-fabric.md").read_text()
         self.assertIn("Bootstrap: repository scaffold", text)
         self.assertIn("Tested on Minecraft 1.21.4, Fabric Loader 0.19.5, Fabric API 0.119.4+1.21.4.", text)
-        self.assertIn("New in this release: Fabric, 1.21.4; NeoForge, 1.21.4; Fabric, 1.21.5; "
-                       "NeoForge, 1.21.5; Fabric, 1.21.8; NeoForge, 1.21.8.", text)
+        self.assertIn("New in this release: ", text)
+        self.assertIn("Fabric, 1.21.4", text)
+        self.assertIn("Fabric, 26.2", text)
         self.assertIn("Still planned: none.", text)
+
+    def test_checksums_file_feeds_a_files_section_per_target(self):
+        (self.root / "dist").mkdir()
+        jar_name = f"grounded_villages-1.21.4-fabric-0.1.0.jar"
+        (self.root / "dist" / "SHA256SUMS").write_text(f"deadbeef  {jar_name}\n")
+        proc = self.run_tool()
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        text = (self.root / "dist" / "notes" / "grounded_villages-1.21.4-fabric.md").read_text()
+        self.assertIn(f"`{jar_name}`, SHA-256 `deadbeef`.", text)
+        other = (self.root / "dist" / "notes" / "grounded_villages-1.21.5-fabric.md").read_text()
+        self.assertNotIn("## Files", other)
 
     def test_missing_changelog_fails(self):
         (self.root / "CHANGELOG.md").unlink()
