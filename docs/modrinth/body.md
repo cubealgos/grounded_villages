@@ -13,7 +13,7 @@
 | Server side | Required |
 | Loaders | Fabric, NeoForge, Forge |
 | Game versions | 1.20.1, 1.21.1, 26.2 |
-| Dependencies | none (Fabric API is used only by the development harness and game tests, never at runtime) |
+| Dependencies | none |
 | Icon | not yet made — a separate ticket generates it with the fleet's navy-badge tool; `docs/modrinth/icon.png` does not exist until then |
 | Links | Source `https://git.cubealgos.de/cubealgos/grounded_villages` · Issues `https://github.com/cubealgos/grounded_villages/issues` |
 
