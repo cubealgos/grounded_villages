@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "Villages generate on one consistent ground level, dry, and in a genuine range of sizes. Placement only -- no terrain edits of this mod's own.",
+  "authors": [
+    "Kevin Scheeren"
+  ],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/grounded-villages",
+    "sources": "https://github.com/cubealgos/grounded_villages"
+  },
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "grounded_villages.fabric.GroundedVillagesFabric"
+    ],
+    "fabric-gametest": [
+      "grounded_villages.fabric.gametest.PieceGateFabricGameTests"
+    ]
+  },
+  "mixins": [
+    "grounded_villages.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19",
+    "minecraft": "${minecraft}"
+  }
+}

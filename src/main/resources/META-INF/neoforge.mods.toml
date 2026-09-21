@@ -1,0 +1,36 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+
+[[mods]]
+modId = "${id}"
+displayName = "${name}"
+version = "${version}"
+authors = "Kevin Scheeren"
+description = "Villages generate on one consistent ground level, dry, and in a genuine range of sizes. Placement only -- no terrain edits of this mod's own."
+
+# The [[mixins]] block declares the mixin config to FML so it gets loaded -- NeoForge's own
+# official declarative mechanism since 20.3 (04-architecture.md ARCH-DEC-002), no manifest
+# MixinConfigs attribute needed on this loader (that path is Forge 1.20.1-only,
+# build.forge.gradle.kts). `config` is the one required key; this shape (top-level [[mixins]],
+# `config` string, no `requiredMods`) is confirmed identical on both NeoForge 21.1.251 (bundled
+# FancyModLoader 4.0.44) and 26.2.0.88 (bundled FancyModLoader 11.0.16) by direct decompilation of
+# both real loader-*.jar artifacts' own ModFileParser (GV-12) -- no metadata-format drift between
+# them, unlike the real FMLEnvironment API drift GV-12 found and documents in docs/loaders.md and
+# GroundedVillagesNeoForge's own javadoc.
+[[mixins]]
+config = "grounded_villages.mixins.json"
+
+[[dependencies.${id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "[1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft}"
+ordering = "NONE"
+side = "BOTH"

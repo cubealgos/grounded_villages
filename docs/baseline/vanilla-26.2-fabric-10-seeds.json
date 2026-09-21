@@ -1,0 +1,136 @@
+{
+  "generated_by": "GV-10 seed-sweep harness (./gradlew :26.2-fabric:seedSweep -Pcount=10)",
+  "node": "26.2-fabric",
+  "mod_state": "vanilla (grounded_villages installed but SITE/PIECE/TIER not yet implemented -- GV-6/7/8)",
+  "seeds_source": "docs/baseline/seeds.txt, first 10",
+  "summary": {
+    "seeds": 10,
+    "mean_height_spread": 14.37,
+    "max_height_spread": 26.0,
+    "mean_water_fraction": 0.1277915034468869,
+    "max_water_fraction": 0.5337662337662338,
+    "mean_piece_count": 117.1
+  },
+  "villages": [
+    {
+      "seed": 1,
+      "structureId": "minecraft:village_plains",
+      "startX": 640,
+      "startY": 0,
+      "startZ": 816,
+      "pieceCount": 84,
+      "heightSpread": 8.0,
+      "waterFraction": 0.16393442622950818,
+      "sampleCount": 427,
+      "runtimeMillis": 7285
+    },
+    {
+      "seed": 2,
+      "structureId": "minecraft:village_plains",
+      "startX": -416,
+      "startY": 0,
+      "startZ": 240,
+      "pieceCount": 80,
+      "heightSpread": 5.0,
+      "waterFraction": 0.024390243902439025,
+      "sampleCount": 328,
+      "runtimeMillis": 6897
+    },
+    {
+      "seed": 3,
+      "structureId": "minecraft:village_plains",
+      "startX": 256,
+      "startY": 0,
+      "startZ": 848,
+      "pieceCount": 103,
+      "heightSpread": 12.0,
+      "waterFraction": 0.0,
+      "sampleCount": 479,
+      "runtimeMillis": 6584
+    },
+    {
+      "seed": 4,
+      "structureId": "minecraft:village_snowy",
+      "startX": -464,
+      "startY": 0,
+      "startZ": 16,
+      "pieceCount": 105,
+      "heightSpread": 11.0,
+      "waterFraction": 0.4598825831702544,
+      "sampleCount": 511,
+      "runtimeMillis": 7311
+    },
+    {
+      "seed": 5,
+      "structureId": "minecraft:village_plains",
+      "startX": -208,
+      "startY": 0,
+      "startZ": -464,
+      "pieceCount": 230,
+      "heightSpread": 20.0,
+      "waterFraction": 0.07241379310344828,
+      "sampleCount": 870,
+      "runtimeMillis": 13197
+    },
+    {
+      "seed": 6,
+      "structureId": "minecraft:village_snowy",
+      "startX": -1280,
+      "startY": 0,
+      "startZ": 1216,
+      "pieceCount": 50,
+      "heightSpread": 23.0,
+      "waterFraction": 0.0,
+      "sampleCount": 241,
+      "runtimeMillis": 5124
+    },
+    {
+      "seed": 7,
+      "structureId": "minecraft:village_plains",
+      "startX": 928,
+      "startY": 0,
+      "startZ": -224,
+      "pieceCount": 141,
+      "heightSpread": 25.0,
+      "waterFraction": 0.008875739644970414,
+      "sampleCount": 676,
+      "runtimeMillis": 26717
+    },
+    {
+      "seed": 8,
+      "structureId": "minecraft:village_taiga",
+      "startX": 16,
+      "startY": 0,
+      "startZ": -224,
+      "pieceCount": 114,
+      "heightSpread": 7.0,
+      "waterFraction": 0.014652014652014652,
+      "sampleCount": 546,
+      "runtimeMillis": 13524
+    },
+    {
+      "seed": 9,
+      "structureId": "minecraft:village_plains",
+      "startX": -192,
+      "startY": 0,
+      "startZ": 800,
+      "pieceCount": 151,
+      "heightSpread": 26.0,
+      "waterFraction": 0.5337662337662338,
+      "sampleCount": 770,
+      "runtimeMillis": 10860
+    },
+    {
+      "seed": 10,
+      "structureId": "minecraft:village_snowy",
+      "startX": 192,
+      "startY": 0,
+      "startZ": 256,
+      "pieceCount": 113,
+      "heightSpread": 6.699999999999989,
+      "waterFraction": 0.0,
+      "sampleCount": 534,
+      "runtimeMillis": 9378
+    }
+  ]
+}
