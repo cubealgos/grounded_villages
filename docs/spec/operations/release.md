@@ -8,7 +8,7 @@ category: "grounded_villages"
 
 | Item | Position |
 |---|---|
-| Version scheme | `<mod>-<mc>-<loader>` — e.g. `grounded_villages-1.21.1-fabric`, `grounded_villages-26.2-neoforge`, `grounded_villages-1.20.1-forge`. Both `<mc>` **and** `<loader>` are encoded, the same reasoning `villager_voices` `REL-DEC-001` gives for its own scheme: a fabric jar and a neoforge (or forge) jar for the same Minecraft version are two different artifacts, not one build with two loader tags. |
+| Version scheme | **Amended at the first release (2026-09-21, GV-28):** `<semver>+<mc>-<loader>`, e.g. `1.0.0+1.21.1-fabric`, `1.0.0+26.2-neoforge`; the mod version must be part of the number or a 1.0.1 could never be uploaded, Modrinth version numbers being unique and permanent per project. The original text follows. `<mod>-<mc>-<loader>` — e.g. `grounded_villages-1.21.1-fabric`, `grounded_villages-26.2-neoforge`, `grounded_villages-1.20.1-forge`. Both `<mc>` **and** `<loader>` are encoded, the same reasoning `villager_voices` `REL-DEC-001` gives for its own scheme: a fabric jar and a neoforge (or forge) jar for the same Minecraft version are two different artifacts, not one build with two loader tags. |
 | Branches | gitkontor's: `development`, `production`; releases are tags on `production` |
 | Channels | Modrinth only; CurseForge deferred |
 | CI | Woodpecker: `./gradlew chiseledBuild` — Stonecutter's own aggregate task, registered explicitly in the root build script (not automatic from applying the plugin), invoking each node's `buildAndCollect`-shaped task in turn (`multi-loader-multi-version-mods-2026.md` "Grounded Villages" §5); plus lint, unit tests, and the shared-source purity check (`04-architecture.md` `ARCH-DEC-002`), game tests per shipped combination (`contracts/platform-matrix.md`), live from the first push since the repo is public on Forgejo from the bootstrap, GitHub mirror carrying the public issue tracker |
@@ -40,7 +40,7 @@ operator on an unshipped version knows to wait rather than file a bug.
 
 ## Decisions
 
-- `REL-DEC-001` — **`<mod>-<mc>-<loader>`, Kevin's own scheme**, not `villager_voices`'
+- `REL-DEC-001` — **Amended 2026-09-21 (GV-28): `<semver>+<mc>-<loader>`, decided at the first publish when the missing mod version surfaced; originally `<mod>-<mc>-<loader>`, attributed to Kevin as his own scheme**, not `villager_voices`'
   `<semver>[-alpha.N]+<mc>-<loader>`. Recorded as this project's own version-string format because
   Kevin specified it directly rather than this sheet proposing one. **Cost if wrong**: a
   version-string format change before the first tagged release is free; after one exists, it is a

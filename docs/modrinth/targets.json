@@ -4,110 +4,158 @@
     {
       "node": "1.20.1-fabric",
       "jar": "build/libs/1.0.0/grounded_villages-1.20.1-fabric-1.0.0.jar",
-      "game_versions": ["1.20.1"],
-      "loaders": ["fabric"],
-      "version_number": "grounded_villages-1.20.1-fabric",
+      "game_versions": [
+        "1.20.1"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "version_number": "1.0.0+1.20.1-fabric",
       "version_name": "Grounded Villages 1.0.0 for Fabric 1.20.1",
-      "changelog_file": "dist/notes/grounded_villages-1.20.1-fabric.md"
+      "changelog_file": "dist/notes/1.0.0+1.20.1-fabric.md"
     },
     {
       "node": "1.20.1-forge",
       "jar": "build/libs/1.0.0/grounded_villages-1.20.1-forge-1.0.0.jar",
-      "game_versions": ["1.20.1"],
-      "loaders": ["forge"],
-      "version_number": "grounded_villages-1.20.1-forge",
+      "game_versions": [
+        "1.20.1"
+      ],
+      "loaders": [
+        "forge"
+      ],
+      "version_number": "1.0.0+1.20.1-forge",
       "version_name": "Grounded Villages 1.0.0 for Forge 1.20.1",
-      "changelog_file": "dist/notes/grounded_villages-1.20.1-forge.md"
+      "changelog_file": "dist/notes/1.0.0+1.20.1-forge.md"
     },
     {
       "node": "1.21.1-fabric",
       "jar": "build/libs/1.0.0/grounded_villages-1.21.1-fabric-1.0.0.jar",
-      "game_versions": ["1.21.1"],
-      "loaders": ["fabric"],
-      "version_number": "grounded_villages-1.21.1-fabric",
+      "game_versions": [
+        "1.21.1"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "version_number": "1.0.0+1.21.1-fabric",
       "version_name": "Grounded Villages 1.0.0 for Fabric 1.21.1",
-      "changelog_file": "dist/notes/grounded_villages-1.21.1-fabric.md"
+      "changelog_file": "dist/notes/1.0.0+1.21.1-fabric.md"
     },
     {
       "node": "1.21.1-neoforge",
       "jar": "build/libs/1.0.0/grounded_villages-1.21.1-neoforge-1.0.0.jar",
-      "game_versions": ["1.21.1"],
-      "loaders": ["neoforge"],
-      "version_number": "grounded_villages-1.21.1-neoforge",
+      "game_versions": [
+        "1.21.1"
+      ],
+      "loaders": [
+        "neoforge"
+      ],
+      "version_number": "1.0.0+1.21.1-neoforge",
       "version_name": "Grounded Villages 1.0.0 for NeoForge 1.21.1",
-      "changelog_file": "dist/notes/grounded_villages-1.21.1-neoforge.md"
+      "changelog_file": "dist/notes/1.0.0+1.21.1-neoforge.md"
     },
     {
       "node": "1.21.4-fabric",
       "jar": "build/libs/1.0.0/grounded_villages-1.21.4-fabric-1.0.0.jar",
-      "game_versions": ["1.21.4"],
-      "loaders": ["fabric"],
-      "version_number": "grounded_villages-1.21.4-fabric",
+      "game_versions": [
+        "1.21.4"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "version_number": "1.0.0+1.21.4-fabric",
       "version_name": "Grounded Villages 1.0.0 for Fabric 1.21.4",
-      "changelog_file": "dist/notes/grounded_villages-1.21.4-fabric.md"
+      "changelog_file": "dist/notes/1.0.0+1.21.4-fabric.md"
     },
     {
       "node": "1.21.4-neoforge",
       "jar": "build/libs/1.0.0/grounded_villages-1.21.4-neoforge-1.0.0.jar",
-      "game_versions": ["1.21.4"],
-      "loaders": ["neoforge"],
-      "version_number": "grounded_villages-1.21.4-neoforge",
+      "game_versions": [
+        "1.21.4"
+      ],
+      "loaders": [
+        "neoforge"
+      ],
+      "version_number": "1.0.0+1.21.4-neoforge",
       "version_name": "Grounded Villages 1.0.0 for NeoForge 1.21.4",
-      "changelog_file": "dist/notes/grounded_villages-1.21.4-neoforge.md"
+      "changelog_file": "dist/notes/1.0.0+1.21.4-neoforge.md"
     },
     {
       "node": "1.21.5-fabric",
       "jar": "build/libs/1.0.0/grounded_villages-1.21.5-fabric-1.0.0.jar",
-      "game_versions": ["1.21.5"],
-      "loaders": ["fabric"],
-      "version_number": "grounded_villages-1.21.5-fabric",
+      "game_versions": [
+        "1.21.5"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "version_number": "1.0.0+1.21.5-fabric",
       "version_name": "Grounded Villages 1.0.0 for Fabric 1.21.5",
-      "changelog_file": "dist/notes/grounded_villages-1.21.5-fabric.md"
+      "changelog_file": "dist/notes/1.0.0+1.21.5-fabric.md"
     },
     {
       "node": "1.21.5-neoforge",
       "jar": "build/libs/1.0.0/grounded_villages-1.21.5-neoforge-1.0.0.jar",
-      "game_versions": ["1.21.5"],
-      "loaders": ["neoforge"],
-      "version_number": "grounded_villages-1.21.5-neoforge",
+      "game_versions": [
+        "1.21.5"
+      ],
+      "loaders": [
+        "neoforge"
+      ],
+      "version_number": "1.0.0+1.21.5-neoforge",
       "version_name": "Grounded Villages 1.0.0 for NeoForge 1.21.5",
-      "changelog_file": "dist/notes/grounded_villages-1.21.5-neoforge.md"
+      "changelog_file": "dist/notes/1.0.0+1.21.5-neoforge.md"
     },
     {
       "node": "1.21.8-fabric",
       "jar": "build/libs/1.0.0/grounded_villages-1.21.8-fabric-1.0.0.jar",
-      "game_versions": ["1.21.8"],
-      "loaders": ["fabric"],
-      "version_number": "grounded_villages-1.21.8-fabric",
+      "game_versions": [
+        "1.21.8"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "version_number": "1.0.0+1.21.8-fabric",
       "version_name": "Grounded Villages 1.0.0 for Fabric 1.21.8",
-      "changelog_file": "dist/notes/grounded_villages-1.21.8-fabric.md"
+      "changelog_file": "dist/notes/1.0.0+1.21.8-fabric.md"
     },
     {
       "node": "1.21.8-neoforge",
       "jar": "build/libs/1.0.0/grounded_villages-1.21.8-neoforge-1.0.0.jar",
-      "game_versions": ["1.21.8"],
-      "loaders": ["neoforge"],
-      "version_number": "grounded_villages-1.21.8-neoforge",
+      "game_versions": [
+        "1.21.8"
+      ],
+      "loaders": [
+        "neoforge"
+      ],
+      "version_number": "1.0.0+1.21.8-neoforge",
       "version_name": "Grounded Villages 1.0.0 for NeoForge 1.21.8",
-      "changelog_file": "dist/notes/grounded_villages-1.21.8-neoforge.md"
+      "changelog_file": "dist/notes/1.0.0+1.21.8-neoforge.md"
     },
     {
       "node": "26.2-fabric",
       "jar": "build/libs/1.0.0/grounded_villages-26.2-fabric-1.0.0.jar",
-      "game_versions": ["26.2"],
-      "loaders": ["fabric"],
-      "version_number": "grounded_villages-26.2-fabric",
+      "game_versions": [
+        "26.2"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "version_number": "1.0.0+26.2-fabric",
       "version_name": "Grounded Villages 1.0.0 for Fabric 26.2",
-      "changelog_file": "dist/notes/grounded_villages-26.2-fabric.md"
+      "changelog_file": "dist/notes/1.0.0+26.2-fabric.md"
     },
     {
       "node": "26.2-neoforge",
       "jar": "build/libs/1.0.0/grounded_villages-26.2-neoforge-1.0.0.jar",
-      "game_versions": ["26.2"],
-      "loaders": ["neoforge"],
-      "version_number": "grounded_villages-26.2-neoforge",
+      "game_versions": [
+        "26.2"
+      ],
+      "loaders": [
+        "neoforge"
+      ],
+      "version_number": "1.0.0+26.2-neoforge",
       "version_name": "Grounded Villages 1.0.0 for NeoForge 26.2",
-      "changelog_file": "dist/notes/grounded_villages-26.2-neoforge.md"
+      "changelog_file": "dist/notes/1.0.0+26.2-neoforge.md"
     }
   ]
 }
