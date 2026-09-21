@@ -21,14 +21,14 @@ sibling mod's own release ticket follows.
 ## Acceptance criteria
 
 - [ ] `REL-REQ-001`: every release jar is built by `just release` from a clean checkout at a tag
-- [ ] `REL-REQ-002`: release notes list the Minecraft version, loader, and loader version tested
+- [x] `REL-REQ-002`: release notes list the Minecraft version, loader, and loader version tested
   for each jar
-- [ ] `REL-REQ-003`: release notes state the default thresholds, tier weights, budget multipliers,
+- [x] `REL-REQ-003`: release notes state the default thresholds, tier weights, budget multipliers,
   and performance cap in force for this release
-- [ ] `REL-REQ-004`: release notes state plainly which combinations are new and which remain
+- [x] `REL-REQ-004`: release notes state plainly which combinations are new and which remain
   `planned`
-- [ ] `CHANGELOG.md`'s `## Unreleased` section is closed out into a real version section
-- [ ] release checksums are included in the release notes (`operations/compliance.md` "Supply
+- [x] `CHANGELOG.md`'s `## Unreleased` section is closed out into a real version section
+- [x] release checksums are included in the release notes (`operations/compliance.md` "Supply
   chain and release integrity")
 - [ ] the manual/release checklist (`operations/testing.md`) is run against every combination
   shipping in this release, not carried over from another combination's pass
