@@ -45,12 +45,12 @@ mod's own scoring is nonetheless built independently from (`DEC-009`: no code re
 own metric is height *spread*, not raw variance: the 90th-minus-10th-percentile of sampled ground
 heights at `OCEAN_FLOOR_WG` (true ground, not water-topped) across the candidate radius.
 
-### Thresholds and search (config keys, `domains/config.md`) — proposed defaults, tune at the harness sweep
+### Thresholds and search (config keys, `domains/config.md`) — confirmed defaults
 
-**Proposed by Claude, 2026-09-20, Kevin to confirm at the first ticket.** All from
+**Confirmed by Kevin, 2026-09-21 (GV-27).** All from
 `domains/config.md`'s own schema, restated here for this domain's reading:
 
-| Config key | Governs | Default (proposed) |
+| Config key | Governs | Default |
 |---|---|---|
 | `site.enabled` | Whether site selection runs at all (`ARCH-DEC-004`) | `true` |
 | `site.max_height_spread` | 90th-minus-10th-percentile spread of sampled ground heights (`OCEAN_FLOOR_WG`) a candidate must be within to qualify | `12` blocks |
@@ -99,5 +99,5 @@ fallback) that the transition table above is complete on its own; a human reader
 
 | Question | Blocks | Decided by |
 |---|---|---|
-| Whether §3's proposed defaults hold up once measured by the headless harness sweep | `SITE-REQ-001`–`003` | **Proposed by Claude, 2026-09-20; `search_step`/`search_attempts` re-tuned by Claude, 2026-09-20 (GV-6) to `48`-block radius in `48`-block steps / `4` attempts (4 cardinal offsets at the full safe distance), from the same 10-seed sweep — `docs/baseline/README.md` has the before/after table and the measured trade-off.** `max_height_spread`/`max_water_fraction` (`12` blocks / `5%`) left as originally proposed, per GV-6's own ticket scope — still Kevin's to confirm at this ticket, config-overridable regardless of outcome |
+| Whether §3's defaults hold up once measured by the headless harness sweep | `SITE-REQ-001`–`003` | **Confirmed by Kevin, 2026-09-21 (GV-27); `search_step`/`search_attempts` re-tuned by Claude, 2026-09-20 (GV-6) to `48`-block radius in `48`-block steps / `4` attempts (4 cardinal offsets at the full safe distance), from the same 10-seed sweep — `docs/baseline/README.md` has the before/after table and the measured trade-off.** `max_height_spread`/`max_water_fraction` (`12` blocks / `5%`) confirmed as shipped, config-overridable regardless of outcome |
 | Whether to read "Improved Village Placement"'s own source for design ideas (`decisions/DEC-009-prior-art.md` already rules out code reuse; this is only about reading, not reusing) | `SITE-REQ-001` | first ticket, low priority |

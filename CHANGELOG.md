@@ -25,7 +25,10 @@ this mod's own.
   cap regardless of tier.
 - **The config file and every default** (GV-9), written to `config/grounded_villages.json` on first
   launch, validated with clamp-and-warn behaviour rather than crashing on a malformed value; no
-  in-game or live reload at this release — a config edit takes effect on the next server start:
+  in-game or live reload at this release — a config edit takes effect on the next server start.
+  Every default below is confirmed by Kevin (GV-27); the `city` tier's jigsaw depth is `9`, dropped
+  from the originally proposed `10` after a seed-18 harness measurement rolled a depth-10 city at
+  718 pieces in 28.6s:
 
   | Key | Default |
   |---|---|
@@ -40,7 +43,7 @@ this mod's own.
   | `piece.max_height_deviation` | `6` blocks |
   | `tier.enabled` | `true` |
   | `tier.weights.hamlet` / `.village` / `.town` / `.city` | `30` / `45` / `20` / `5` |
-  | `tier.jigsaw_depth.hamlet` / `.village` / `.town` / `.city` | `3` / `6` / `8` / `10` |
+  | `tier.jigsaw_depth.hamlet` / `.village` / `.town` / `.city` | `3` / `6` / `8` / `9` |
   | `tier.max_distance.hamlet` / `.village` / `.town` / `.city` | `80` / `96` / `128` / `128` blocks |
   | `tier.hamlet_minimum_pieces` | `4` |
   | `tier.performance_cap_multiplier` | `3.0` (of vanilla's own piece count for that structure) |
@@ -75,10 +78,12 @@ statistical guarantee for every world.
 
 ### Known limitations
 
-- The `city` tier's jigsaw depth (`10`) and the 128-block max distance are a piece-*budget*
-  estimate fed to vanilla's own jigsaw assembly, not a hard bound on the final piece count or
-  footprint — the realised size still depends on what vanilla's assembly and per-piece rejection
-  actually produce for a given site.
+- The `city` tier's jigsaw depth (`9`, dropped from `10` for 1.0 — GV-27, after a seed-18 harness
+  run rolled a depth-10 city at 718 pieces in 28.6s) and the 128-block max distance are a
+  piece-*budget* estimate fed to vanilla's own jigsaw assembly, not a hard bound on the final piece
+  count or footprint — the realised size still depends on what vanilla's assembly and per-piece
+  rejection actually produce for a given site. A live, hard piece-count bound is deferred to a
+  later ticket.
 - A village whose surviving pieces still fall short of the hamlet minimum after a shifted-site
   retry falls back to vanilla's own unchecked placement rather than disappearing — on genuinely
   difficult terrain it can still generate scattered or partly wet, exactly as vanilla would have

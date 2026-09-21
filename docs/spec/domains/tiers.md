@@ -27,17 +27,16 @@ villages" (`00-context.md`); which sites and pieces are acceptable at whatever s
 
 ### The four tiers
 
-| Tier | Weight (proposed) | Jigsaw depth (proposed) | Max distance (proposed) | Shape |
+| Tier | Weight | Jigsaw depth | Max distance | Shape |
 |---|---|---|---|---|
 | `hamlet` | 30 | 3 | 80 blocks | A few houses and one workstation cluster — a genuinely small settlement, not a truncated village. Minimum 4 non-street pieces to remain labelled `hamlet` rather than falling further (`TIER-REQ-007`). |
 | `village` | 45 | 6 (vanilla's own default) | 96 blocks | Vanilla's own current scale, unchanged in spirit — the baseline, most common case. |
 | `town` | 20 | 8 | 128 blocks (the hard cap) | Roughly twice a vanilla village's piece budget, single centre. |
-| `city` | 5 | 10 | 128 blocks (the hard cap) | **At 1.0: one centre**, the deepest budget and widest reach this mod allows — resolved below, `TIER-REQ-004`. |
+| `city` | 5 | 9 | 128 blocks (the hard cap) | **At 1.0: one centre**, the deepest budget and widest reach this mod allows — resolved below, `TIER-REQ-004`. |
 
-**Every number above is proposed by Claude, 2026-09-20, Kevin to confirm at the first ticket** — the
-full config schema lives in `domains/config.md`; this table restates it for this domain's own
-reading. A **performance cap of 3× vanilla's piece count** applies regardless of tier
-(`TIER-REQ-005`).
+**Every number above is confirmed by Kevin, 2026-09-21 (GV-27)** — the full config schema lives in
+`domains/config.md`; this table restates it for this domain's own reading. A **performance cap of
+3× vanilla's piece count** applies regardless of tier (`TIER-REQ-005`).
 
 ### `city` at 1.0: one centre, not multiple — resolved
 
@@ -54,10 +53,10 @@ run twice and is a genuinely separate feature from this tier's 1.0 scope.
 
 ### Config keys
 
-| Config key | Governs | Default (proposed) |
+| Config key | Governs | Default |
 |---|---|---|
 | `tier.weights.hamlet` / `.village` / `.town` / `.city` | Relative roll weight per tier | `30`/`45`/`20`/`5` |
-| `tier.jigsaw_depth.hamlet` / `.village` / `.town` / `.city` | `maxDepth` fed to vanilla's jigsaw assembly per tier | `3`/`6`/`8`/`10` |
+| `tier.jigsaw_depth.hamlet` / `.village` / `.town` / `.city` | `maxDepth` fed to vanilla's jigsaw assembly per tier | `3`/`6`/`8`/`9` |
 | `tier.max_distance.hamlet` / `.village` / `.town` / `.city` | `max_distance_from_center` per tier, blocks | `80`/`96`/`128`/`128` |
 | `tier.hamlet_minimum_pieces` | Non-street piece count a shrinking village must clear to stay a `hamlet` rather than triggering a retry | `4` |
 | `tier.performance_cap` | Absolute ceiling on total piece count (or equivalent generation cost) per village, regardless of tier | `3×` vanilla's own piece count |
@@ -101,12 +100,12 @@ machine would show only "roll once, apply, done," which the table above already 
 | Question | Blocks | Decided by |
 |---|---|---|
 | Whether to build the deferred multiple-centres shape as a second chained jigsaw start ~60 blocks from the first, or some other mechanism | Future ticket, not 1.0 | Not yet scoped — a candidate shape only, `decisions/DEC-006-size-tiers.md` |
-| Every proposed default in §3's tables (weights, depths, distances, hamlet minimum, performance cap) | `TIER-REQ-001`–`007` | **Proposed by Claude, 2026-09-20** — Kevin to confirm at the first ticket, tuned against the headless harness sweep (`operations/testing.md`) |
+| Every default in §3's tables (weights, depths, distances, hamlet minimum, performance cap) | `TIER-REQ-001`–`007` | **Confirmed by Kevin, 2026-09-21 (GV-27)**, tuned against the headless harness sweep (`operations/testing.md`); city's jigsaw depth dropped from `10` to `9` for 1.0 — `decisions/DEC-006-size-tiers.md`'s 2026-09-21 amendment |
 
 ### Spacing — closed
 
-**Proposed by Claude, 2026-09-20, Kevin to confirm at the first ticket; closes the spacing question
-this domain previously left open.** No change to vanilla's own structure spacing at 1.0
+**Confirmed by Kevin, 2026-09-21 (GV-27); closes the spacing question this domain previously left
+open.** No change to vanilla's own structure spacing at 1.0
 (`structure_set/villages.json`: `random_spread`, `spacing: 34` chunks, `separation: 8` chunks,
 unchanged 1.20.1–26.2). Every tier's `max_distance_from_center` is capped at the 128-block hard
 engine ceiling (`MAX_TOTAL_STRUCTURE_RANGE`) regardless of tier, so `town` and `city` may occasionally

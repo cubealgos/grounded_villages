@@ -770,3 +770,38 @@ expected to match exactly across Minecraft versions in general (terrain generati
 shift between versions) -- they happen to here because 1.21.1 through 1.21.8 share the same
 terrain/structure generation math this mod observes; only `runtimeMillis`, which this harness
 never asserts on, differs, and only by ordinary wall-clock variance.
+
+## GV-27: city jigsaw depth 9, seed 18 re-measured
+
+Kevin's ruling (`decisions/DEC-006-size-tiers.md`'s 2026-09-21 amendment): drop the `city` tier's
+shipped jigsaw depth from `10` to `9`, a direct response to GV-8's own seed-18 measurement above
+(718 pieces, 28,619 ms). Re-measured the identical seed under the identical isolated conditions
+GV-8 used (`site.enabled`/`piece.enabled` both `false`, `tier.enabled: true`, otherwise
+shipped-default config) -- `./gradlew :26.2-fabric:seedSweep -Pseeds=18` -- so the only variable
+between this row and GV-8's own is the depth itself, not a different site/piece pipeline:
+
+| Depth | Pieces | Time | Height spread | Water fraction |
+|---|---|---|---|---|
+| 10 (GV-8, before) | 718 | 28,619 ms (28.6s) | not recorded | not recorded |
+| 9 (GV-27, after) | 564 | 16,641 ms (16.6s) | 19.0 | 4.8% |
+
+**718 -> 564 pieces (-21.5%), 28.6s -> 16.6s (-41.8%)** for the same seed, same tier roll (`city`,
+deterministic from the world seed and the village's position, unaffected by the depth budget
+itself). A real, measured improvement in the single most expensive case this fleet has found -- but,
+per `TierRoller`'s own javadoc and this same file's own GV-8 section above, still not a *hard*
+bound: `capDepth`'s linear expected-piece-count model puts a depth-9 city's own expected count at
+roughly 176 of the `performance_cap_multiplier: 3.0` cap's 351, so no clamp fired here either, and
+a genuinely unlucky seed could still produce a real piece count well past that expectation, the
+same structural gap GV-8 already flagged. A live, hard piece-count bound (counting pieces during
+jigsaw assembly and aborting mid-generation) stays deferred to a later ticket, not built here.
+
+With the shipped, all-domains-enabled config (`site.enabled`/`piece.enabled`/`tier.enabled` all
+`true`, the real end-to-end pipeline a player actually experiences), the same seed 18's nearest
+village no longer rolls `city` at all: `SITE`'s own bounded search shifts the candidate to a
+different position before any piece exists, changing the tier draw along with it (the draw is
+seed-and-position-derived, `TIER-REQ-001`) -- this run instead rolled `hamlet` (23 pieces, shrunk
+from a rejected candidate, 22,355 ms). Expected, not a regression: `docs/baseline/README.md`'s own
+GV-6 section already found the single-nearest-village harness reports whichever candidate a broad
+`findNearestMapStructure` scan happens to land on, not a representative sample of every candidate
+SITE touches -- the isolated tier-only comparison above, not this end-to-end run, is the one
+directly comparable to GV-8's own 718-piece number.

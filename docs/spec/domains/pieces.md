@@ -41,7 +41,7 @@ checks too.
 | Criterion | Applies to | Rule | Configurable? |
 |---|---|---|---|
 | Water in footprint | Every piece, including streets | Reject if any sampled point's block state is water | The check can be turned off entirely (`piece.enabled`); the rule itself (any water = reject) is not a tunable fraction — Kevin's ruling states it as a flat condition, not a threshold, unlike site-level water fraction (`domains/site.md`) |
-| Height deviation | Every piece, including streets | Reject if the piece's own ground height (via `OCEAN_FLOOR_WG`) deviates from the village's start height (`03-glossary.md`) by more than `piece.max_height_deviation` blocks | Yes — `piece.max_height_deviation` is a config value, proposed default `6` blocks (`domains/config.md`, **proposed by Claude, 2026-09-20, Kevin to confirm at the first ticket**) |
+| Height deviation | Every piece, including streets | Reject if the piece's own ground height (via `OCEAN_FLOOR_WG`) deviates from the village's start height (`03-glossary.md`) by more than `piece.max_height_deviation` blocks | Yes — `piece.max_height_deviation` is a config value, default `6` blocks (`domains/config.md`, **confirmed by Kevin, 2026-09-21 (GV-27)**) |
 
 Vanilla's own two piece kinds behave differently going into this check, confirmed by direct bytecode
 read: **`TERRAIN_MATCHING` pieces** (every street element in `village/plains/streets.json`) already

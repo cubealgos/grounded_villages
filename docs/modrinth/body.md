@@ -141,7 +141,7 @@ retunable without touching Java.
 | `piece.max_height_deviation` | `6` blocks | How far a single piece's ground height may deviate from the village's start height. |
 | `tier.enabled` | `true` | Whether tier rolling runs at all; when `false`, every village rolls `village` (vanilla-like size). |
 | `tier.weights.hamlet` / `.village` / `.town` / `.city` | `30` / `45` / `20` / `5` | Relative roll weight per tier. |
-| `tier.jigsaw_depth.hamlet` / `.village` / `.town` / `.city` | `3` / `6` / `8` / `10` | Piece-depth budget fed to vanilla's own jigsaw assembly per tier. |
+| `tier.jigsaw_depth.hamlet` / `.village` / `.town` / `.city` | `3` / `6` / `8` / `9` | Piece-depth budget fed to vanilla's own jigsaw assembly per tier. |
 | `tier.max_distance.hamlet` / `.village` / `.town` / `.city` | `80` / `96` / `128` / `128` blocks | Maximum radius from the village centre per tier. |
 | `tier.hamlet_minimum_pieces` | `4` | Non-street piece floor a shrinking village must clear to stay labelled `hamlet`. |
 | `tier.performance_cap_multiplier` | `3.0` | Ceiling on generated piece count, as a multiplier of vanilla's own piece count for that structure. |
