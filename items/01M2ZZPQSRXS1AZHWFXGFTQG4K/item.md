@@ -20,7 +20,7 @@ Not designed further here; the concrete work is scoped at GV-19, GV-20, and GV-2
 
 ## Acceptance criteria
 
-- [ ] every child ticket of this epic reaches `done`
+- [x] every child ticket of this epic reaches `done`
 
 ## Constraints and prior findings
 

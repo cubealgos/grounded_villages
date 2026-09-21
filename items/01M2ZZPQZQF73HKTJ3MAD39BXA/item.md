@@ -20,7 +20,7 @@ sibling mod's own release ticket follows.
 
 ## Acceptance criteria
 
-- [ ] `REL-REQ-001`: every release jar is built by `just release` from a clean checkout at a tag
+- [x] (built clean at tag v1.0.0 on 2026-09-21, twelve jars, checksums in dist/SHA256SUMS) `REL-REQ-001`: every release jar is built by `just release` from a clean checkout at a tag
 - [x] `REL-REQ-002`: release notes list the Minecraft version, loader, and loader version tested
   for each jar
 - [x] `REL-REQ-003`: release notes state the default thresholds, tier weights, budget multipliers,
@@ -30,7 +30,7 @@ sibling mod's own release ticket follows.
 - [x] `CHANGELOG.md`'s `## Unreleased` section is closed out into a real version section
 - [x] release checksums are included in the release notes (`operations/compliance.md` "Supply
   chain and release integrity")
-- [ ] the manual/release checklist (`operations/testing.md`) is run against every combination
+- [x] (headless items run per node in docs/release/1.0.0-checklist.md; the client rows waived by Kevin's ruling of 2026-09-21 to release on the harness numbers) the manual/release checklist (`operations/testing.md`) is run against every combination
   shipping in this release, not carried over from another combination's pass
 
 ## Constraints and prior findings
